@@ -66,6 +66,7 @@ export function invitationToTemplateProps(invitation: Invitation | PublicInvitat
     },
 
     meta: {
+      templateId: config.templateId,
       slug,
       isPublic: "status" in invitation ? invitation.status === "published" : true,
       greeting: content.openingMessage,
@@ -78,17 +79,25 @@ export function invitationToTemplateProps(invitation: Invitation | PublicInvitat
 /**
  * Konversi TemplateProps (form editor) ke UpdateInvitationRequest (API).
  * Dipakai di: auto-save dan manual save di EditorShell.
+ *
+ * ⚠️  PENTING: Backend replace seluruh `content` atau `config` object sekaligus
+ * (bukan field-level partial). Wajib kirim full object — jangan kirim sebagian field.
  */
 export function templatePropsToUpdateRequest(props: TemplateProps): UpdateInvitationRequest {
-  const config: Partial<InvitationConfig> = {
+  // Full InvitationConfig — semua field wajib ada
+  const config: InvitationConfig = {
+    templateId: props.meta.templateId,
     couplePhoto: props.photo.couple,
     colors: {
       primary: props.colors.primary,
       secondary: props.colors.secondary,
     },
+    fonts: undefined,
+    music: { enabled: false },
   }
 
-  const content: Partial<InvitationContent> = {
+  // Full InvitationContent — semua field wajib ada, null untuk yang tidak diisi
+  const content: InvitationContent = {
     groomName: props.couple.groomFullName ?? props.couple.groomName,
     brideName: props.couple.brideFullName ?? props.couple.brideName,
     groomParents: props.couple.groomParents,
@@ -102,23 +111,23 @@ export function templatePropsToUpdateRequest(props: TemplateProps): UpdateInvita
       mapsUrl: props.events.reception.mapsUrl,
     },
 
-    ...(props.events.akad ? {
-      akadDate: combineDatetime(props.events.akad.date, props.events.akad.time),
-      akadVenue: {
-        name: props.events.akad.venue,
-        address: props.events.akad.address,
-        mapsUrl: props.events.akad.mapsUrl,
-      },
-    } : { akadDate: null, akadVenue: null }),
+    akadDate: props.events.akad
+      ? combineDatetime(props.events.akad.date, props.events.akad.time)
+      : null,
+    akadVenue: props.events.akad
+      ? { name: props.events.akad.venue, address: props.events.akad.address, mapsUrl: props.events.akad.mapsUrl }
+      : null,
 
-    digitalEnvelope: props.digitalGifts ? {
-      bankAccounts: props.digitalGifts.bankAccounts?.map(acc => ({
-        bankName: acc.bankName,
-        accountNumber: acc.accountNumber,
-        accountName: acc.accountHolder,  // FE: accountHolder → API: accountName
-      })),
-      qrisImageUrl: props.digitalGifts.qrisImageUrl,
-    } : null,
+    digitalEnvelope: props.digitalGifts
+      ? {
+          bankAccounts: props.digitalGifts.bankAccounts?.map(acc => ({
+            bankName: acc.bankName,
+            accountNumber: acc.accountNumber,
+            accountName: acc.accountHolder,  // FE: accountHolder → API: accountName
+          })),
+          qrisImageUrl: props.digitalGifts.qrisImageUrl ?? null,
+        }
+      : null,
   }
 
   return {

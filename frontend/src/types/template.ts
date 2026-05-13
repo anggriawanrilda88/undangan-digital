@@ -60,6 +60,7 @@ export interface TemplateProps {
 
   // === METADATA ===
   meta: {
+    templateId: string        // ID template yang dipilih, e.g. "elegant-garden"
     slug: string              // URL slug: /u/[slug]
     isPublic: boolean
     rsvpDeadline?: string     // ISO 8601 date
@@ -109,6 +110,7 @@ export const TEMPLATE_PREVIEW_DATA: TemplateProps = {
     accent: "#8B6F4E",
   },
   meta: {
+    templateId: "elegant-garden",
     slug: "rizky-aulia",
     isPublic: true,
     rsvpDeadline: "2025-09-13",
