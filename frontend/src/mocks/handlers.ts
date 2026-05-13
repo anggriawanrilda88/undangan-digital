@@ -6,7 +6,7 @@
 import { http, HttpResponse, delay } from "msw"
 import type { Invitation, InvitationSummary, PublicInvitation, Rsvp, RsvpListResponse } from "@/types/api"
 
-const BASE = "/v1"
+const BASE = "/api/v1"
 
 // ─── Mock Data ───────────────────────────────────────────
 
@@ -109,8 +109,8 @@ export const handlers = [
     return HttpResponse.json({ success: true, data: created }, { status: 201 })
   }),
 
-  // check-slug harus sebelum /:id
-  http.get(`${BASE}/invitations/check-slug`, async ({ request }) => {
+  // slug check — standalone endpoint (bukan nested di /invitations)
+  http.get(`${BASE}/slugs/check`, async ({ request }) => {
     await delay(150)
     const url = new URL(request.url)
     const slug = url.searchParams.get("slug") ?? ""

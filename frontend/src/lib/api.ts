@@ -21,7 +21,7 @@ import type {
   ApiError,
 } from "@/types/api"
 
-const BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/v1")
+const BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1")
 
 // ─── Core fetch wrapper ──────────────────────────────────
 
@@ -80,7 +80,7 @@ export const api = {
     apiFetch<null>(`/invitations/${id}`, { method: "DELETE" }, token),
 
   checkSlug: (slug: string, token: string) =>
-    apiFetch<SlugCheckResult>(`/invitations/check-slug?slug=${encodeURIComponent(slug)}`, {}, token),
+    apiFetch<SlugCheckResult>(`/slugs/check?slug=${encodeURIComponent(slug)}`, {}, token),
 
   // ── Public ──
   getPublicInvitation: (slug: string) =>
