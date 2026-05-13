@@ -1,9 +1,12 @@
 /**
  * API Client — wrapper untuk semua request ke Golang API (Reza)
  * Spec: docs/openapi-undangan-digital.yaml
- * Base URL: NEXT_PUBLIC_API_URL (default: http://localhost:8080/v1)
+ * Base URL: NEXT_PUBLIC_API_URL (default: http://localhost:8080/api/v1)
+ *
+ * Auth di-handle otomatis via authHeaders() — tidak perlu pass token manual.
  */
 
+import { authHeaders } from "./supabase"
 import type {
   UserProfile,
   Invitation,
@@ -21,32 +24,9 @@ import type {
   ApiError,
 } from "@/types/api"
 
-const BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1")
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"
 
-// ─── Core fetch wrapper ──────────────────────────────────
-
-async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {},
-  token?: string
-): Promise<T> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> ?? {}),
-  }
-  if (token) headers["Authorization"] = `Bearer ${token}`
-
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
-  const json = (await res.json()) as ApiSuccess<T> | ApiError
-
-  if (!res.ok || !json.success) {
-    const err = (json as ApiError).error
-    const error = new ApiException(err?.code ?? "UNKNOWN", err?.message ?? `HTTP ${res.status}`)
-    throw error
-  }
-
-  return (json as ApiSuccess<T>).data
-}
+// ─── Error class ─────────────────────────────────────────
 
 export class ApiException extends Error {
   constructor(public code: string, message: string) {
@@ -55,53 +35,87 @@ export class ApiException extends Error {
   }
 }
 
+// ─── Core fetch wrapper ──────────────────────────────────
+
+/**
+ * apiFetch — auto-attach JWT dari Supabase session.
+ * Pass `authenticated: false` untuk endpoint publik (tidak perlu auth).
+ */
+async function apiFetch<T>(
+  path: string,
+  options: RequestInit & { authenticated?: boolean } = {}
+): Promise<T> {
+  const { authenticated = true, ...fetchOptions } = options
+
+  const authH = authenticated ? await authHeaders() : {}
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...authH,
+    ...(fetchOptions.headers as Record<string, string> ?? {}),
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, { ...fetchOptions, headers })
+  const json = (await res.json()) as ApiSuccess<T> | ApiError
+
+  if (!res.ok || !json.success) {
+    const err = (json as ApiError).error
+    throw new ApiException(err?.code ?? "UNKNOWN", err?.message ?? `HTTP ${res.status}`)
+  }
+
+  return (json as ApiSuccess<T>).data
+}
+
 // ─── API Methods ─────────────────────────────────────────
 
 export const api = {
 
   // ── Auth ──
-  getMe: (token: string) =>
-    apiFetch<UserProfile>("/auth/me", {}, token),
+  getMe: () =>
+    apiFetch<UserProfile>("/auth/me"),
 
   // ── Invitations (authenticated) ──
-  listInvitations: (token: string) =>
-    apiFetch<InvitationSummary[]>("/invitations", {}, token),
+  listInvitations: () =>
+    apiFetch<InvitationSummary[]>("/invitations"),
 
-  createInvitation: (payload: CreateInvitationRequest, token: string) =>
-    apiFetch<Invitation>("/invitations", { method: "POST", body: JSON.stringify(payload) }, token),
+  createInvitation: (payload: CreateInvitationRequest) =>
+    apiFetch<Invitation>("/invitations", { method: "POST", body: JSON.stringify(payload) }),
 
-  getInvitation: (id: string, token: string) =>
-    apiFetch<Invitation>(`/invitations/${id}`, {}, token),
+  getInvitation: (id: string) =>
+    apiFetch<Invitation>(`/invitations/${id}`),
 
-  updateInvitation: (id: string, payload: UpdateInvitationRequest, token: string) =>
-    apiFetch<Invitation>(`/invitations/${id}`, { method: "PUT", body: JSON.stringify(payload) }, token),
+  updateInvitation: (id: string, payload: UpdateInvitationRequest) =>
+    apiFetch<Invitation>(`/invitations/${id}`, { method: "PUT", body: JSON.stringify(payload) }),
 
-  deleteInvitation: (id: string, token: string) =>
-    apiFetch<null>(`/invitations/${id}`, { method: "DELETE" }, token),
+  deleteInvitation: (id: string) =>
+    apiFetch<null>(`/invitations/${id}`, { method: "DELETE" }),
 
-  checkSlug: (slug: string, token: string) =>
-    apiFetch<SlugCheckResult>(`/slugs/check?slug=${encodeURIComponent(slug)}`, {}, token),
+  // Debounce 400ms sebelum call! (US-04 slug validation)
+  checkSlug: (slug: string) =>
+    apiFetch<SlugCheckResult>(`/slugs/check?slug=${encodeURIComponent(slug)}`),
 
-  // ── Public ──
+  // ── Public (no auth) ──
   getPublicInvitation: (slug: string) =>
-    apiFetch<PublicInvitation>(`/i/${slug}`),
+    apiFetch<PublicInvitation>(`/i/${slug}`, { authenticated: false }),
 
   // ── RSVP ──
   submitRsvp: (invitationId: string, payload: RsvpRequest) =>
     apiFetch<Rsvp>(`/invitations/${invitationId}/rsvp`, {
       method: "POST",
       body: JSON.stringify(payload),
+      authenticated: false,  // Tamu submit tanpa login
     }),
 
-  getRsvpList: (invitationId: string, token: string, params?: { status?: string; page?: number; limit?: number }) => {
+  getRsvpList: (invitationId: string, params?: { status?: string; page?: number; limit?: number }) => {
     const qs = new URLSearchParams()
     if (params?.status) qs.set("status", params.status)
     if (params?.page) qs.set("page", String(params.page))
     if (params?.limit) qs.set("limit", String(params.limit))
-    return apiFetch<RsvpListResponse>(`/invitations/${invitationId}/rsvp?${qs}`, {}, token)
+    const query = qs.toString() ? `?${qs}` : ""
+    return apiFetch<RsvpListResponse>(`/invitations/${invitationId}/rsvp${query}`)
   },
 
-  // ── Upload ──
-  presignUpload: (payload: PresignRequest, token: string) =>
-    apiFetch<PresignResult>("/upload/presign", { method: "POST", body: JSON.stringify(payload) }, token),
+  // ── Upload (presign — Phase 2, skip for MVP) ──
+  presignUpload: (payload: PresignRequest) =>
+    apiFetch<PresignResult>("/upload/presign", { method: "POST", body: JSON.stringify(payload) }),
 }
