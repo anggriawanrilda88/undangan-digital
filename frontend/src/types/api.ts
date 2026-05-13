@@ -126,8 +126,8 @@ export interface CreateInvitationRequest {
 export interface UpdateInvitationRequest {
   slug?: string
   status?: InvitationStatus
-  config?: Partial<InvitationConfig>
-  content?: Partial<InvitationContent>
+  config?: InvitationConfig          // Full object — backend replace whole config
+  content?: InvitationContent        // Full object — backend replace whole content
 }
 
 // ─── Slug Check ─────────────────────────────────────────
