@@ -5,7 +5,15 @@ import Image from "next/image"
 import { MapPin, Clock, Calendar, Copy, Check } from "lucide-react"
 import { useState } from "react"
 import type { TemplateProps } from "@/types/template"
+import type { RsvpStatus } from "@/types/api"
 import { formatDateID, formatTime, cn } from "@/lib/utils"
+
+/** Display label untuk RSVP status enum (API pakai English, tampilkan Indonesia) */
+export const rsvpStatusLabel: Record<RsvpStatus, string> = {
+  attending: "Hadir",
+  not_attending: "Tidak Hadir",
+  maybe: "Mungkin Hadir",
+} as const
 
 /**
  * Template: Elegant Garden
@@ -302,12 +310,16 @@ function EventCard({
 }
 
 function RsvpForm({ onSubmit, colors }: { onSubmit: () => void; colors: TemplateProps["colors"] }) {
-  const [form, setForm] = useState({ name: "", attendance: "hadir", guests: "1" })
+  const [form, setForm] = useState({ name: "", attendance: "attending" as RsvpStatus, guests: "1" })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Kirim ke API Reza — POST /api/rsvp
-    console.log("RSVP:", form)
+    // TODO: Wire ke api.submitRsvp(invitationId, { guestName, status, guestCount })
+    // api.submitRsvp(invitationId, {
+    //   guestName: form.name,
+    //   status: form.attendance,
+    //   guestCount: form.attendance === "attending" ? Number(form.guests) : 0,
+    // })
     onSubmit()
   }
 
@@ -322,14 +334,14 @@ function RsvpForm({ onSubmit, colors }: { onSubmit: () => void; colors: Template
       />
       <select
         value={form.attendance}
-        onChange={e => setForm(f => ({ ...f, attendance: e.target.value }))}
+        onChange={e => setForm(f => ({ ...f, attendance: e.target.value as RsvpStatus }))}
         className="w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white"
       >
-        <option value="hadir">✅ Hadir</option>
-        <option value="tidak_hadir">❌ Tidak Hadir</option>
-        <option value="mungkin">🤔 Mungkin Hadir</option>
+        <option value="attending">✅ Hadir</option>
+        <option value="not_attending">❌ Tidak Hadir</option>
+        <option value="maybe">🤔 Mungkin Hadir</option>
       </select>
-      {form.attendance === "hadir" && (
+      {form.attendance === "attending" && (
         <select
           value={form.guests}
           onChange={e => setForm(f => ({ ...f, guests: e.target.value }))}
