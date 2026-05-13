@@ -1,75 +1,50 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Eye, EyeOff, Save, Check } from "lucide-react"
+import { Eye, EyeOff, Save, Check, Loader2, AlertCircle } from "lucide-react"
 import type { TemplateProps } from "@/types/template"
-import { TEMPLATE_PREVIEW_DATA } from "@/types/template"
 import { cn } from "@/lib/utils"
+import ImageUpload from "@/components/ui/ImageUpload"
 
 interface EditorShellProps {
   /** Template component yang akan di-render */
   TemplateComponent: React.ComponentType<TemplateProps>
-  /** Initial data undangan */
-  initialData?: Partial<TemplateProps>
-  /** Callback saat save (kirim ke API) */
-  onSave?: (data: TemplateProps) => Promise<void>
+  /** Data undangan dari hook */
+  data: TemplateProps
+  /** Status save */
+  saveStatus: "idle" | "saving" | "saved" | "error"
+  /** Callback update data */
+  onUpdate: (updater: (prev: TemplateProps) => TemplateProps) => void
+  /** Manual save */
+  onSave: () => Promise<void>
 }
 
-type SaveStatus = "idle" | "saving" | "saved" | "error"
-
-export default function EditorShell({ TemplateComponent, initialData, onSave }: EditorShellProps) {
-  const [data, setData] = useState<TemplateProps>({ ...TEMPLATE_PREVIEW_DATA, ...initialData })
+export default function EditorShell({
+  TemplateComponent,
+  data,
+  saveStatus,
+  onUpdate,
+  onSave,
+}: EditorShellProps) {
   const [isPreviewMode, setIsPreviewMode] = useState(false)
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
-  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Auto-save tiap 30 detik sesuai AC US-03
-  const triggerSave = useCallback(async () => {
-    if (!onSave) return
-    setSaveStatus("saving")
-    try {
-      await onSave(data)
-      setSaveStatus("saved")
-      setTimeout(() => setSaveStatus("idle"), 3000)
-    } catch {
-      setSaveStatus("error")
-    }
-  }, [data, onSave])
-
-  useEffect(() => {
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
-    autoSaveTimer.current = setTimeout(triggerSave, 30_000)
-    return () => {
-      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
-    }
-  }, [data, triggerSave])
-
-  const updateData = (updater: (prev: TemplateProps) => TemplateProps) => {
-    setData(updater)
-  }
 
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col">
-      {/* === EDITOR TOPBAR === */}
+      {/* === TOPBAR === */}
       <header className="sticky top-0 z-50 bg-white border-b border-stone-200 px-4 h-14 flex items-center justify-between gap-4 shadow-sm">
         <h1 className="font-semibold text-stone-800 text-sm truncate">✏️ Edit Undangan</h1>
-
         <div className="flex items-center gap-2">
-          {/* Save status indicator */}
           <SaveIndicator status={saveStatus} />
-
-          {/* Manual save */}
           <button
-            onClick={triggerSave}
+            onClick={onSave}
             disabled={saveStatus === "saving"}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-50 transition-colors"
           >
             <Save size={13} />
             Simpan
           </button>
-
-          {/* Toggle Preview — Fixed prominent button sesuai AC */}
+          {/* Toggle Preview — prominent, fixed di topbar (sesuai keputusan Prita: toggle mode) */}
           <button
             onClick={() => setIsPreviewMode(p => !p)}
             className={cn(
@@ -88,28 +63,26 @@ export default function EditorShell({ TemplateComponent, initialData, onSave }: 
       <div className="flex-1 relative overflow-hidden">
         <AnimatePresence mode="wait">
           {isPreviewMode ? (
-            // PREVIEW MODE — full-screen tampilan undangan real-time
             <motion.div
               key="preview"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.22 }}
               className="absolute inset-0 overflow-y-auto"
             >
               <TemplateComponent {...data} />
             </motion.div>
           ) : (
-            // EDIT MODE — form editor
             <motion.div
               key="editor"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.22 }}
               className="absolute inset-0 overflow-y-auto"
             >
-              <EditorForm data={data} onChange={updateData} />
+              <EditorForm data={data} onUpdate={onUpdate} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -118,8 +91,9 @@ export default function EditorShell({ TemplateComponent, initialData, onSave }: 
   )
 }
 
-// === Save Status Indicator ===
-function SaveIndicator({ status }: { status: SaveStatus }) {
+// ─── Save Indicator ───────────────────────────────────────
+
+function SaveIndicator({ status }: { status: EditorShellProps["saveStatus"] }) {
   if (status === "idle") return null
   return (
     <motion.div
@@ -132,123 +106,199 @@ function SaveIndicator({ status }: { status: SaveStatus }) {
         status === "error" && "text-red-500",
       )}
     >
-      {status === "saving" && <span className="animate-pulse">Menyimpan...</span>}
+      {status === "saving" && <><Loader2 size={12} className="animate-spin" /> Menyimpan...</>}
       {status === "saved" && <><Check size={12} /> Tersimpan</>}
-      {status === "error" && "Gagal menyimpan"}
+      {status === "error" && <><AlertCircle size={12} /> Gagal menyimpan</>}
     </motion.div>
   )
 }
 
-// === Editor Form ===
-function EditorForm({ data, onChange }: { data: TemplateProps; onChange: (fn: (prev: TemplateProps) => TemplateProps) => void }) {
-  const update = <K extends keyof TemplateProps>(key: K, value: TemplateProps[K]) => {
-    onChange(prev => ({ ...prev, [key]: value }))
-  }
+// ─── Editor Form ──────────────────────────────────────────
+
+function EditorForm({
+  data,
+  onUpdate,
+}: {
+  data: TemplateProps
+  onUpdate: EditorShellProps["onUpdate"]
+}) {
+  const set = <K extends keyof TemplateProps>(key: K, value: TemplateProps[K]) =>
+    onUpdate(prev => ({ ...prev, [key]: value }))
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 space-y-8">
+    <div className="max-w-lg mx-auto px-4 py-6 space-y-8 pb-24">
+
+      {/* FOTO COUPLE */}
+      <Section title="📸 Foto Couple">
+        <ImageUpload
+          value={data.photo.couple}
+          onChange={url => set("photo", { ...data.photo, couple: url })}
+          folder="couple_photos"
+          aspectClass="aspect-[4/3]"
+          label="Foto utama (tampil di halaman undangan)"
+        />
+      </Section>
 
       {/* PASANGAN */}
-      <Section title="👫 Pengantin">
+      <Section title="👫 Nama Pengantin">
         <Field label="Nama Pengantin Pria">
           <Input
-            value={data.couple.groomName}
-            onChange={v => update("couple", { ...data.couple, groomName: v })}
-            placeholder="Nama panggilan pengantin pria"
+            value={data.couple.groomFullName ?? data.couple.groomName}
+            onChange={v => set("couple", { ...data.couple, groomFullName: v, groomName: v.split(" ")[0] ?? v })}
+            placeholder="Nama lengkap pengantin pria"
           />
         </Field>
-        <Field label="Nama Lengkap (opsional)">
+        <Field label="Nama Orang Tua Pria (opsional)">
           <Input
-            value={data.couple.groomFullName ?? ""}
-            onChange={v => update("couple", { ...data.couple, groomFullName: v })}
-            placeholder="Nama lengkap untuk caption formal"
+            value={data.couple.groomParents ?? ""}
+            onChange={v => set("couple", { ...data.couple, groomParents: v })}
+            placeholder="Putra dari Bapak ... & Ibu ..."
           />
         </Field>
         <Field label="Nama Pengantin Wanita">
           <Input
-            value={data.couple.brideName}
-            onChange={v => update("couple", { ...data.couple, brideName: v })}
-            placeholder="Nama panggilan pengantin wanita"
+            value={data.couple.brideFullName ?? data.couple.brideName}
+            onChange={v => set("couple", { ...data.couple, brideFullName: v, brideName: v.split(" ")[0] ?? v })}
+            placeholder="Nama lengkap pengantin wanita"
+          />
+        </Field>
+        <Field label="Nama Orang Tua Wanita (opsional)">
+          <Input
+            value={data.couple.brideParents ?? ""}
+            onChange={v => set("couple", { ...data.couple, brideParents: v })}
+            placeholder="Putri dari Bapak ... & Ibu ..."
           />
         </Field>
       </Section>
 
       {/* RESEPSI */}
       <Section title="🎊 Resepsi">
-        <Field label="Tanggal">
-          <Input
-            type="date"
-            value={data.events.reception.date}
-            onChange={v => update("events", { ...data.events, reception: { ...data.events.reception, date: v } })}
-          />
-        </Field>
-        <Field label="Waktu">
-          <Input
-            type="time"
-            value={data.events.reception.time}
-            onChange={v => update("events", { ...data.events, reception: { ...data.events.reception, time: v } })}
-          />
-        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Tanggal">
+            <Input type="date" value={data.events.reception.date}
+              onChange={v => set("events", { ...data.events, reception: { ...data.events.reception, date: v } })} />
+          </Field>
+          <Field label="Waktu">
+            <Input type="time" value={data.events.reception.time}
+              onChange={v => set("events", { ...data.events, reception: { ...data.events.reception, time: v } })} />
+          </Field>
+        </div>
         <Field label="Nama Venue">
-          <Input
-            value={data.events.reception.venue}
-            onChange={v => update("events", { ...data.events, reception: { ...data.events.reception, venue: v } })}
-            placeholder="Nama gedung/tempat"
-          />
+          <Input value={data.events.reception.venue}
+            onChange={v => set("events", { ...data.events, reception: { ...data.events.reception, venue: v } })}
+            placeholder="Nama gedung / tempat" />
         </Field>
         <Field label="Alamat Lengkap">
-          <Textarea
-            value={data.events.reception.address}
-            onChange={v => update("events", { ...data.events, reception: { ...data.events.reception, address: v } })}
-            placeholder="Alamat lengkap venue"
-          />
+          <Textarea value={data.events.reception.address}
+            onChange={v => set("events", { ...data.events, reception: { ...data.events.reception, address: v } })}
+            placeholder="Alamat lengkap" />
         </Field>
         <Field label="Google Maps Link (opsional)">
-          <Input
-            value={data.events.reception.mapsUrl ?? ""}
-            onChange={v => update("events", { ...data.events, reception: { ...data.events.reception, mapsUrl: v } })}
-            placeholder="https://maps.google.com/..."
-          />
+          <Input value={data.events.reception.mapsUrl ?? ""}
+            onChange={v => set("events", { ...data.events, reception: { ...data.events.reception, mapsUrl: v || undefined } })}
+            placeholder="https://maps.google.com/..." />
         </Field>
       </Section>
 
       {/* AKAD */}
-      <Section title="🕌 Akad Nikah (opsional)">
-        <Field label="Tanggal">
-          <Input
-            type="date"
-            value={data.events.akad?.date ?? ""}
-            onChange={v => update("events", { ...data.events, akad: { ...data.events.akad!, date: v } })}
+      <Section title="🕌 Akad Nikah">
+        <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={!!data.events.akad}
+            onChange={e => set("events", {
+              ...data.events,
+              akad: e.target.checked
+                ? { date: data.events.reception.date, time: "08:00", venue: "", address: "" }
+                : undefined
+            })}
+            className="rounded border-stone-300 text-amber-500 focus:ring-amber-400"
           />
-        </Field>
-        <Field label="Waktu">
-          <Input
-            type="time"
-            value={data.events.akad?.time ?? ""}
-            onChange={v => update("events", { ...data.events, akad: { ...data.events.akad!, time: v } })}
-          />
-        </Field>
-        <Field label="Nama Venue">
-          <Input
-            value={data.events.akad?.venue ?? ""}
-            onChange={v => update("events", { ...data.events, akad: { ...data.events.akad!, venue: v } })}
-            placeholder="Nama masjid/tempat akad"
+          Tampilkan info akad nikah
+        </label>
+        {data.events.akad && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-3 mt-2"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Tanggal">
+                <Input type="date" value={data.events.akad.date}
+                  onChange={v => set("events", { ...data.events, akad: { ...data.events.akad!, date: v } })} />
+              </Field>
+              <Field label="Waktu">
+                <Input type="time" value={data.events.akad.time}
+                  onChange={v => set("events", { ...data.events, akad: { ...data.events.akad!, time: v } })} />
+              </Field>
+            </div>
+            <Field label="Nama Venue">
+              <Input value={data.events.akad.venue}
+                onChange={v => set("events", { ...data.events, akad: { ...data.events.akad!, venue: v } })}
+                placeholder="Nama masjid / tempat akad" />
+            </Field>
+            <Field label="Alamat">
+              <Textarea value={data.events.akad.address}
+                onChange={v => set("events", { ...data.events, akad: { ...data.events.akad!, address: v } })}
+                placeholder="Alamat lengkap" />
+            </Field>
+          </motion.div>
+        )}
+      </Section>
+
+      {/* AMPLOP DIGITAL */}
+      <Section title="💳 Amplop Digital">
+        <BankAccountsEditor
+          accounts={data.digitalGifts?.bankAccounts ?? []}
+          onChange={accounts => set("digitalGifts", { ...data.digitalGifts, bankAccounts: accounts })}
+        />
+        <Field label="QRIS (opsional)">
+          <ImageUpload
+            value={data.digitalGifts?.qrisImageUrl}
+            onChange={url => set("digitalGifts", { ...data.digitalGifts, qrisImageUrl: url })}
+            folder="qris"
+            aspectClass="aspect-square"
+            label=""
           />
         </Field>
       </Section>
 
-      {/* SLUG */}
+      {/* LINK UNDANGAN */}
       <Section title="🔗 Link Undangan">
         <Field label="Slug URL">
-          <div className="flex items-center gap-1 text-sm">
-            <span className="text-stone-400 shrink-0">undangan.id/u/</span>
-            <Input
+          <div className="flex items-center rounded-xl border border-stone-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-amber-400">
+            <span className="px-3 text-stone-400 text-sm shrink-0 border-r border-stone-200 py-2.5">
+              undangan.id/u/
+            </span>
+            <input
               value={data.meta.slug}
-              onChange={v => update("meta", { ...data.meta, slug: v.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") })}
+              onChange={e => set("meta", {
+                ...data.meta,
+                slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
+              })}
               placeholder="nama-pasangan"
+              className="flex-1 px-3 py-2.5 text-sm focus:outline-none bg-transparent"
             />
           </div>
-          {/* TODO: validasi slug real-time via GET /api/slugs/check (tunggu API Reza) */}
+          {/* TODO: slug availability check (debounce 400ms → GET /api/v1/slugs/check) */}
+        </Field>
+
+        <Field label="Pesan Pembuka (opsional)">
+          <Textarea
+            value={data.meta.greeting ?? ""}
+            onChange={v => set("meta", { ...data.meta, greeting: v || undefined })}
+            placeholder="Dengan memohon rahmat dan ridho Allah SWT..."
+            rows={3}
+          />
+        </Field>
+
+        <Field label="Batas RSVP (opsional)">
+          <Input
+            type="date"
+            value={data.meta.rsvpDeadline ?? ""}
+            onChange={v => set("meta", { ...data.meta, rsvpDeadline: v || undefined })}
+          />
         </Field>
       </Section>
 
@@ -256,7 +306,78 @@ function EditorForm({ data, onChange }: { data: TemplateProps; onChange: (fn: (p
   )
 }
 
-// === Reusable form primitives ===
+// ─── Bank Accounts sub-editor ────────────────────────────
+
+const BANK_OPTIONS = ["BCA", "Mandiri", "BNI", "BRI", "CIMB", "GoPay", "OVO", "Dana", "Lainnya"]
+
+function BankAccountsEditor({
+  accounts,
+  onChange,
+}: {
+  accounts: NonNullable<TemplateProps["digitalGifts"]>["bankAccounts"] & {}
+  onChange: (accounts: NonNullable<TemplateProps["digitalGifts"]>["bankAccounts"]) => void
+}) {
+  const addAccount = () => {
+    if ((accounts?.length ?? 0) >= 3) return
+    onChange([...(accounts ?? []), { bankName: "BCA", accountNumber: "", accountHolder: "" }])
+  }
+
+  const updateAccount = (i: number, field: string, value: string) => {
+    const updated = accounts?.map((a, idx) => idx === i ? { ...a, [field]: value } : a)
+    onChange(updated)
+  }
+
+  const removeAccount = (i: number) => {
+    onChange(accounts?.filter((_, idx) => idx !== i))
+  }
+
+  return (
+    <div className="space-y-3">
+      {accounts?.map((acc, i) => (
+        <div key={i} className="bg-stone-50 rounded-xl p-3 space-y-2 border border-stone-100">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-stone-500">Rekening {i + 1}</span>
+            <button onClick={() => removeAccount(i)} className="text-stone-400 hover:text-red-500 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <select
+            value={acc.bankName}
+            onChange={e => updateAccount(i, "bankName", e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+          >
+            {BANK_OPTIONS.map(b => <option key={b}>{b}</option>)}
+          </select>
+          <input
+            value={acc.accountNumber}
+            onChange={e => updateAccount(i, "accountNumber", e.target.value)}
+            placeholder="Nomor rekening"
+            className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white font-mono"
+          />
+          <input
+            value={acc.accountHolder}
+            onChange={e => updateAccount(i, "accountHolder", e.target.value)}
+            placeholder="Atas nama"
+            className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+          />
+        </div>
+      ))}
+      {(accounts?.length ?? 0) < 3 && (
+        <button
+          onClick={addAccount}
+          className="w-full py-2.5 rounded-xl border-2 border-dashed border-stone-300 text-sm text-stone-500 hover:border-amber-400 hover:text-amber-700 transition-colors"
+        >
+          + Tambah Rekening
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ─── Form primitives ──────────────────────────────────────
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-4">
@@ -269,7 +390,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <label className="text-xs text-stone-500 font-medium">{label}</label>
+      {label && <label className="text-xs text-stone-500 font-medium">{label}</label>}
       {children}
     </div>
   )
@@ -289,15 +410,15 @@ function Input({ value, onChange, placeholder, type = "text" }: {
   )
 }
 
-function Textarea({ value, onChange, placeholder }: {
-  value: string; onChange: (v: string) => void; placeholder?: string
+function Textarea({ value, onChange, placeholder, rows = 3 }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; rows?: number
 }) {
   return (
     <textarea
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      rows={3}
+      rows={rows}
       className="w-full px-3 py-2.5 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white resize-none"
     />
   )
