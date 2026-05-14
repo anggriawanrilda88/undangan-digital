@@ -269,7 +269,7 @@ function EditorForm({
         <Field label="Slug URL">
           <div className="flex items-center rounded-xl border border-stone-200 bg-white overflow-hidden focus-within:ring-2 focus-within:ring-amber-400">
             <span className="px-3 text-stone-400 text-sm shrink-0 border-r border-stone-200 py-2.5">
-              undangan.id/u/
+              {(process.env.NEXT_PUBLIC_BASE_URL ?? "https://undangan-digital.anggriawan.my.id")}/u/
             </span>
             <input
               value={data.meta.slug}
