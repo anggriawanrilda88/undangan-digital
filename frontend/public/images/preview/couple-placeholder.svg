@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#f5ead7"/>
+  <rect x="0" y="0" width="800" height="600" fill="url(#grad)"/>
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f9f0e0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e8d5b0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Decorative floral elements -->
+  <circle cx="150" cy="150" r="80" fill="#d4a574" opacity="0.15"/>
+  <circle cx="650" cy="450" r="100" fill="#b5936e" opacity="0.12"/>
+  <circle cx="700" cy="120" r="60" fill="#c4a882" opacity="0.1"/>
+  <circle cx="100" cy="500" r="70" fill="#d4b896" opacity="0.1"/>
+  <!-- Couple silhouette -->
+  <g transform="translate(400, 300)">
+    <!-- Bride -->
+    <ellipse cx="-60" cy="-20" rx="35" ry="45" fill="#c4956a" opacity="0.6"/>
+    <circle cx="-60" cy="-80" r="28" fill="#c4956a" opacity="0.6"/>
+    <!-- Dress -->
+    <path d="M-90,-20 Q-60,80 -30,-20" fill="#d4a97a" opacity="0.5"/>
+    <!-- Groom -->
+    <rect x="10" y="-65" width="55" height="90" rx="5" fill="#8b7355" opacity="0.5"/>
+    <circle cx="37" cy="-85" r="28" fill="#c4956a" opacity="0.6"/>
+  </g>
+  <!-- Heart -->
+  <path d="M400,200 C400,200 420,178 440,190 C460,202 460,225 400,260 C340,225 340,202 360,190 C380,178 400,200 400,200 Z" fill="#b5936e" opacity="0.25"/>
+  <!-- Text -->
+  <text x="400" y="460" font-family="Georgia, serif" font-size="22" fill="#8b6914" text-anchor="middle" opacity="0.7">Foto Pasangan</text>
+  <text x="400" y="490" font-family="Georgia, serif" font-size="14" fill="#a08040" text-anchor="middle" opacity="0.6">Upload foto kamu di editor</text>
+</svg>

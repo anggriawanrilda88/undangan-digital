@@ -81,7 +81,7 @@ export const TEMPLATE_PREVIEW_DATA: TemplateProps = {
     brideParents: "Putri dari Bapak Darmawan & Ibu Lestari",
   },
   photo: {
-    couple: "/images/preview/couple-placeholder.jpg",
+    couple: "/images/preview/couple-placeholder.svg",
   },
   events: {
     akad: {
