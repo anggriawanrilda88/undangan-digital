@@ -159,13 +159,23 @@ export const api = {
       filename: file.name,
       contentType,
     })
+
+    // Backend kadang return internal Docker URL (http://minio:9000).
+    // Rewrite ke public MinIO URL supaya browser bisa akses.
+    const MINIO_PUBLIC = process.env.NEXT_PUBLIC_MINIO_ENDPOINT ?? ""
+    const rewriteUrl = (url: string) =>
+      MINIO_PUBLIC ? url.replace(/https?:\/\/minio:\d+/, MINIO_PUBLIC) : url
+
+    const putUrl = rewriteUrl(uploadUrl)
+    const finalPublicUrl = rewriteUrl(publicUrl)
+
     // PUT langsung ke MinIO — no auth header (presigned URL sudah include credentials)
-    const res = await fetch(uploadUrl, {
+    const res = await fetch(putUrl, {
       method: "PUT",
       body: file,
       headers: { "Content-Type": contentType },
     })
     if (!res.ok) throw new ApiException("UPLOAD_FAILED", `MinIO upload failed: HTTP ${res.status}`)
-    return publicUrl
+    return finalPublicUrl
   },
 }
