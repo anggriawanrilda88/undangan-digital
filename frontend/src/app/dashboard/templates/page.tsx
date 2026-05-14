@@ -21,10 +21,13 @@ export default function TemplatePickerPage() {
     setLoading(true)
 
     try {
+      // Generate slug unik tiap kali — hindari konflik kalau user bolak-balik pilih template
+      const uniqueSlug = `undangan-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+
       // Buat undangan baru dengan template yang dipilih + dummy data awal
       const initialProps = {
         ...TEMPLATE_PREVIEW_DATA,
-        meta: { ...TEMPLATE_PREVIEW_DATA.meta, templateId: selectedId },
+        meta: { ...TEMPLATE_PREVIEW_DATA.meta, templateId: selectedId, slug: uniqueSlug },
       }
       const payload = templatePropsToUpdateRequest(initialProps)
 
