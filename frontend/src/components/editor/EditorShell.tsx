@@ -82,7 +82,7 @@ export default function EditorShell({
               transition={{ duration: 0.22 }}
               className="absolute inset-0 overflow-y-auto"
             >
-              <EditorForm data={data} onUpdate={onUpdate} />
+              <EditorForm data={data} onUpdate={onUpdate} onSave={onSave} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -118,12 +118,20 @@ function SaveIndicator({ status }: { status: EditorShellProps["saveStatus"] }) {
 function EditorForm({
   data,
   onUpdate,
+  onSave,
 }: {
   data: TemplateProps
   onUpdate: EditorShellProps["onUpdate"]
+  onSave: EditorShellProps["onSave"]
 }) {
   const set = <K extends keyof TemplateProps>(key: K, value: TemplateProps[K]) =>
     onUpdate(prev => ({ ...prev, [key]: value }))
+
+  // Upload foto langsung trigger save — tidak tunggu auto-save 30 detik
+  const setPhoto = <K extends keyof TemplateProps["photo"]>(key: K, url: string | undefined) => {
+    onUpdate(prev => ({ ...prev, photo: { ...prev.photo, [key]: url } }))
+    setTimeout(() => onSave(), 300) // beri waktu state update dulu
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-8 pb-24">
@@ -132,7 +140,7 @@ function EditorForm({
       <Section title="📸 Foto Couple">
         <ImageUpload
           value={data.photo.couple}
-          onChange={url => set("photo", { ...data.photo, couple: url })}
+          onChange={url => setPhoto("couple", url)}
           aspectClass="aspect-[4/3]"
           label="Foto utama (tampil di halaman undangan)"
         />
@@ -255,7 +263,10 @@ function EditorForm({
         <Field label="QRIS (opsional)">
           <ImageUpload
             value={data.digitalGifts?.qrisImageUrl}
-            onChange={url => set("digitalGifts", { ...data.digitalGifts, qrisImageUrl: url })}
+            onChange={url => {
+              set("digitalGifts", { ...data.digitalGifts, qrisImageUrl: url })
+              setTimeout(() => onSave(), 300)
+            }}
             aspectClass="aspect-square"
             label=""
           />

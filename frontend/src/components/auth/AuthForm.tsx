@@ -46,16 +46,42 @@ export default function AuthForm() {
 
   return (
     <div className="w-full max-w-sm mx-auto">
+      {/* Mode tabs — prominent toggle */}
+      <div className="flex rounded-xl bg-stone-100 p-1 mb-6">
+        <button
+          type="button"
+          onClick={() => { setMode("login"); setError(null); setName("") }}
+          className={cn(
+            "flex-1 py-2 rounded-lg text-sm font-medium transition-all",
+            mode === "login"
+              ? "bg-white text-stone-800 shadow-sm"
+              : "text-stone-500 hover:text-stone-700"
+          )}
+        >
+          Masuk
+        </button>
+        <button
+          type="button"
+          onClick={() => { setMode("register"); setError(null); setName("") }}
+          className={cn(
+            "flex-1 py-2 rounded-lg text-sm font-medium transition-all",
+            mode === "register"
+              ? "bg-white text-stone-800 shadow-sm"
+              : "text-stone-500 hover:text-stone-700"
+          )}
+        >
+          Daftar Gratis
+        </button>
+      </div>
+
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        key={mode}
+        initial={{ opacity: 0, y: -6 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-8"
+        className="text-center mb-6"
       >
-        <h1 className="text-2xl font-bold text-stone-800">
-          {mode === "login" ? "Masuk ke akun" : "Daftar sekarang"}
-        </h1>
-        <p className="mt-1 text-sm text-stone-500">
+        <p className="text-sm text-stone-500">
           {mode === "login"
             ? "Kelola undangan digital kamu"
             : "Buat undangan pernikahan dalam 10 menit"}
@@ -153,11 +179,11 @@ export default function AuthForm() {
       </form>
 
       {/* Toggle mode */}
-      <p className="mt-6 text-center text-sm text-stone-500">
+      <p className="mt-5 text-center text-xs text-stone-400">
         {mode === "login" ? "Belum punya akun?" : "Sudah punya akun?"}{" "}
         <button
           onClick={() => { setMode(m => m === "login" ? "register" : "login"); setError(null); setName("") }}
-          className="font-medium text-amber-700 hover:underline"
+          className="text-amber-700 hover:underline"
         >
           {mode === "login" ? "Daftar gratis" : "Masuk"}
         </button>
