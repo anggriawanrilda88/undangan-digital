@@ -231,23 +231,13 @@ export const handlers = [
 
   // ── UPLOAD ──
 
-  http.post(`${BASE}/upload/presign`, async ({ request }) => {
-    await delay(200)
-    const body = await request.json() as { filename: string; contentType: string }
-    const ext = body.filename.split(".").pop() ?? "webp"
-    const mockId = `mock-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  http.post(`${BASE}/upload/image`, async () => {
+    await delay(400)
     return HttpResponse.json({
       success: true,
       data: {
-        uploadUrl: `https://mock-minio.anggriawan.my.id/uploads/${mockId}.${ext}?X-Amz-Signature=mock`,
-        publicUrl: `https://mock-minio.anggriawan.my.id/uploads/${mockId}.${ext}`,
+        url: "https://minio.anggriawan.my.id/undangan-uploads/mock-uuid.webp",
       },
     })
-  }),
-
-  // Mock MinIO PUT (presigned URL target)
-  http.put(`https://mock-minio.anggriawan.my.id/uploads/:filename`, async () => {
-    await delay(300)
-    return new HttpResponse(null, { status: 200 })
   }),
 ]

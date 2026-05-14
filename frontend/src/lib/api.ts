@@ -18,8 +18,6 @@ import type {
   RsvpRequest,
   Rsvp,
   RsvpListResponse,
-  PresignRequest,
-  PresignResult,
   ApiSuccess,
   ApiError,
 } from "@/types/api"
@@ -137,45 +135,39 @@ export const api = {
     return apiFetch<RsvpListResponse>(`/invitations/${invitationId}/rsvp${query}`)
   },
 
-  // ── Image Upload (presigned URL flow via MinIO) ──
+  // ── Image Upload ──
   //
-  // Flow:
-  // 1. presignUpload() → dapat { uploadUrl, publicUrl }
-  // 2. PUT uploadUrl langsung dari browser (binary)
-  // 3. Simpan publicUrl ke invitation
-  presignUpload: (payload: PresignRequest) =>
-    apiFetch<PresignResult>("/upload/presign", {
+  // Flow: FE → BE → MinIO (BE yang handle upload ke MinIO)
+  // POST /upload/image (multipart/form-data, field: "file")
+  // Response: { success: true, data: { url: "https://minio.anggriawan.my.id/..." } }
+  uploadImage: async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append("file", file)
+
+    // Tidak set Content-Type — biar browser set boundary multipart sendiri
+    const token = authHeaders()["Authorization"]
+    const headers: Record<string, string> = {}
+    if (token) headers["Authorization"] = token
+
+    const res = await fetch(`${BASE_URL}/upload/image`, {
       method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
-  /**
-   * Helper: compress → presign → PUT ke MinIO → return publicUrl
-   * Dipakai oleh ImageUpload component.
-   */
-  uploadImageFile: async (file: File): Promise<string> => {
-    const contentType = (file.type as PresignRequest["contentType"]) || "image/webp"
-    const { uploadUrl, publicUrl } = await api.presignUpload({
-      filename: file.name,
-      contentType,
+      headers,
+      body: formData,
     })
 
-    // Backend kadang return internal Docker URL (http://minio:9000).
-    // Rewrite ke public MinIO URL supaya browser bisa akses.
-    const MINIO_PUBLIC = process.env.NEXT_PUBLIC_MINIO_ENDPOINT ?? ""
-    const rewriteUrl = (url: string) =>
-      MINIO_PUBLIC ? url.replace(/https?:\/\/minio:\d+/, MINIO_PUBLIC) : url
+    const text = await res.text()
+    if (!text) throw new ApiException("EMPTY_RESPONSE", `Upload error (HTTP ${res.status})`)
 
-    const putUrl = rewriteUrl(uploadUrl)
-    const finalPublicUrl = rewriteUrl(publicUrl)
+    let parsed: ApiSuccess<{ url: string }> | ApiError
+    try { parsed = JSON.parse(text) } catch {
+      throw new ApiException("INVALID_JSON", `Upload error (HTTP ${res.status})`)
+    }
 
-    // PUT langsung ke MinIO — no auth header (presigned URL sudah include credentials)
-    const res = await fetch(putUrl, {
-      method: "PUT",
-      body: file,
-      headers: { "Content-Type": contentType },
-    })
-    if (!res.ok) throw new ApiException("UPLOAD_FAILED", `MinIO upload failed: HTTP ${res.status}`)
-    return finalPublicUrl
+    if (!res.ok || !parsed.success) {
+      const err = (parsed as ApiError).error
+      throw new ApiException(err?.code ?? "UPLOAD_FAILED", err?.message ?? `HTTP ${res.status}`)
+    }
+
+    return (parsed as ApiSuccess<{ url: string }>).data.url
   },
 }
