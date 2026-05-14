@@ -21,6 +21,7 @@ type CreateInvitationContentRequest struct {
 	GroomParents   string     `json:"groomParents"`
 	BrideParents   string     `json:"brideParents"`
 	AkadDate       *time.Time `json:"akadDate"`
+	AkadVenue      *VenueDTO  `json:"akadVenue"`
 	ReceptionDate  time.Time  `json:"receptionDate" binding:"required"`
 	Venue          VenueDTO   `json:"venue" binding:"required"`
 	OpeningMessage string     `json:"openingMessage"`

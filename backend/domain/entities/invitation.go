@@ -60,6 +60,7 @@ type InvitationContent struct {
 	GroomParents    string          `json:"groomParents,omitempty"`
 	BrideParents    string          `json:"brideParents,omitempty"`
 	AkadDate        *time.Time      `json:"akadDate,omitempty"`
+	AkadVenue       *VenueContent   `json:"akadVenue,omitempty"` // nullable — bisa beda tempat dari resepsi
 	ReceptionDate   time.Time       `json:"receptionDate"`
 	Venue           VenueContent    `json:"venue"`
 	OpeningMessage  string          `json:"openingMessage,omitempty"`

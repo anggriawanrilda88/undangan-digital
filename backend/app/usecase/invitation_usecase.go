@@ -40,6 +40,7 @@ func (uc *InvitationUseCase) Create(ctx context.Context, userID uuid.UUID, req d
 		GroomParents:    req.Content.GroomParents,
 		BrideParents:    req.Content.BrideParents,
 		AkadDate:        req.Content.AkadDate,
+		AkadVenue:       toVenueContentPtr(req.Content.AkadVenue),
 		ReceptionDate:   req.Content.ReceptionDate,
 		Venue:           entities.VenueContent(req.Content.Venue),
 		OpeningMessage:  req.Content.OpeningMessage,
@@ -112,6 +113,7 @@ func (uc *InvitationUseCase) Update(ctx context.Context, userID, invID uuid.UUID
 			GroomParents:    req.Content.GroomParents,
 			BrideParents:    req.Content.BrideParents,
 			AkadDate:        req.Content.AkadDate,
+			AkadVenue:       toVenueContentPtr(req.Content.AkadVenue),
 			ReceptionDate:   req.Content.ReceptionDate,
 			Venue:           entities.VenueContent(req.Content.Venue),
 			OpeningMessage:  req.Content.OpeningMessage,
@@ -151,4 +153,12 @@ func (uc *InvitationUseCase) CheckSlug(ctx context.Context, slug string) (bool, 
 		return false, domainerrors.ErrInvalidSlug
 	}
 	return uc.invRepo.IsSlugAvailable(ctx, slug)
+}
+
+func toVenueContentPtr(v *dto.VenueDTO) *entities.VenueContent {
+	if v == nil {
+		return nil
+	}
+	vc := entities.VenueContent(*v)
+	return &vc
 }
