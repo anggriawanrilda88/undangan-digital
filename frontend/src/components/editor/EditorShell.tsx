@@ -133,7 +133,6 @@ function EditorForm({
         <ImageUpload
           value={data.photo.couple}
           onChange={url => set("photo", { ...data.photo, couple: url })}
-          folder="couple_photos"
           aspectClass="aspect-[4/3]"
           label="Foto utama (tampil di halaman undangan)"
         />
@@ -257,7 +256,6 @@ function EditorForm({
           <ImageUpload
             value={data.digitalGifts?.qrisImageUrl}
             onChange={url => set("digitalGifts", { ...data.digitalGifts, qrisImageUrl: url })}
-            folder="qris"
             aspectClass="aspect-square"
             label=""
           />
