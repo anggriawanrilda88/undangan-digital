@@ -3,10 +3,10 @@
  * Spec: docs/openapi-undangan-digital.yaml
  * Base URL: NEXT_PUBLIC_API_URL (default: http://localhost:8080/api/v1)
  *
- * Auth di-handle otomatis via authHeaders() — tidak perlu pass token manual.
+ * Auth di-handle otomatis via authHeaders() dari lib/auth.ts (JWT cookie).
  */
 
-import { authHeaders } from "./supabase"
+import { authHeaders } from "./auth"
 import type {
   UserProfile,
   Invitation,
@@ -18,8 +18,6 @@ import type {
   RsvpRequest,
   Rsvp,
   RsvpListResponse,
-  PresignRequest,
-  PresignResult,
   ApiSuccess,
   ApiError,
 } from "@/types/api"
@@ -38,22 +36,26 @@ export class ApiException extends Error {
 // ─── Core fetch wrapper ──────────────────────────────────
 
 /**
- * apiFetch — auto-attach JWT dari Supabase session.
+ * apiFetch — auto-attach JWT dari cookie session.
  * Pass `authenticated: false` untuk endpoint publik (tidak perlu auth).
  */
 async function apiFetch<T>(
   path: string,
-  options: RequestInit & { authenticated?: boolean } = {}
+  options: RequestInit & { authenticated?: boolean; multipart?: boolean } = {}
 ): Promise<T> {
-  const { authenticated = true, ...fetchOptions } = options
+  const { authenticated = true, multipart = false, ...fetchOptions } = options
 
-  const authH = authenticated ? await authHeaders() : {}
+  const authH = authenticated ? authHeaders() : {}
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...authH,
-    ...(fetchOptions.headers as Record<string, string> ?? {}),
-  }
+  // Untuk multipart/form-data: jangan set Content-Type manual,
+  // biarkan browser set dengan boundary yang benar
+  const headers: Record<string, string> = multipart
+    ? { ...authH, ...(fetchOptions.headers as Record<string, string> ?? {}) }
+    : {
+        "Content-Type": "application/json",
+        ...authH,
+        ...(fetchOptions.headers as Record<string, string> ?? {}),
+      }
 
   const res = await fetch(`${BASE_URL}${path}`, { ...fetchOptions, headers })
   const json = (await res.json()) as ApiSuccess<T> | ApiError
@@ -71,6 +73,20 @@ async function apiFetch<T>(
 export const api = {
 
   // ── Auth ──
+  login: (email: string, password: string) =>
+    apiFetch<{ token: string; user: UserProfile }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+      authenticated: false,
+    }),
+
+  register: (email: string, password: string) =>
+    apiFetch<{ token: string; user: UserProfile }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+      authenticated: false,
+    }),
+
   getMe: () =>
     apiFetch<UserProfile>("/auth/me"),
 
@@ -90,7 +106,7 @@ export const api = {
   deleteInvitation: (id: string) =>
     apiFetch<null>(`/invitations/${id}`, { method: "DELETE" }),
 
-  // Debounce 400ms sebelum call! (US-04 slug validation)
+  // Debounce 400ms sebelum call! (slug validation)
   checkSlug: (slug: string) =>
     apiFetch<SlugCheckResult>(`/slugs/check?slug=${encodeURIComponent(slug)}`),
 
@@ -103,7 +119,7 @@ export const api = {
     apiFetch<Rsvp>(`/invitations/${invitationId}/rsvp`, {
       method: "POST",
       body: JSON.stringify(payload),
-      authenticated: false,  // Tamu submit tanpa login
+      authenticated: false,
     }),
 
   getRsvpList: (invitationId: string, params?: { status?: string; page?: number; limit?: number }) => {
@@ -115,7 +131,14 @@ export const api = {
     return apiFetch<RsvpListResponse>(`/invitations/${invitationId}/rsvp${query}`)
   },
 
-  // ── Upload (presign — Phase 2, skip for MVP) ──
-  presignUpload: (payload: PresignRequest) =>
-    apiFetch<PresignResult>("/upload/presign", { method: "POST", body: JSON.stringify(payload) }),
+  // ── Image Upload ──
+  uploadImage: (file: File) => {
+    const formData = new FormData()
+    formData.append("file", file)
+    return apiFetch<{ url: string }>("/upload/image", {
+      method: "POST",
+      body: formData,
+      multipart: true,
+    })
+  },
 }

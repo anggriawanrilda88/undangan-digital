@@ -4,7 +4,7 @@ import { useState, useRef } from "react"
 import Image from "next/image"
 import { Upload, X, Loader2, ImageIcon } from "lucide-react"
 import imageCompression from "browser-image-compression"
-import { supabase } from "@/lib/supabase"
+import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 interface ImageUploadProps {
@@ -12,10 +12,6 @@ interface ImageUploadProps {
   value?: string
   /** Callback dengan URL publik setelah upload sukses */
   onChange: (url: string | undefined) => void
-  /** Supabase Storage bucket */
-  bucket?: string
-  /** Folder dalam bucket */
-  folder?: string
   /** Aspect ratio untuk preview, e.g. "aspect-square" atau "aspect-[3/4]" */
   aspectClass?: string
   /** Label */
@@ -34,8 +30,6 @@ const COMPRESSION_OPTIONS = {
 export default function ImageUpload({
   value,
   onChange,
-  bucket = "uploads",
-  folder = "couple_photos",
   aspectClass = "aspect-[4/3]",
   label = "Upload Foto",
   disabled = false,
@@ -65,30 +59,19 @@ export default function ImageUpload({
       const compressed = await imageCompression(file, COMPRESSION_OPTIONS)
       setProgress(50)
 
-      // 2. Upload langsung ke Supabase Storage via JS SDK
-      const ext = "webp"
-      const filename = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(filename, compressed, {
-          contentType: "image/webp",
-          upsert: false,
-        })
-
-      if (uploadError) throw uploadError
-      setProgress(90)
-
-      // 3. Ambil public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filename)
-
+      // 2. Upload ke backend endpoint (MinIO via backend)
+      setProgress(70)
+      const { url } = await api.uploadImage(new File([compressed], file.name, { type: "image/webp" }))
       setProgress(100)
-      onChange(publicUrl)
+
+      onChange(url)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Upload gagal"
-      setError(msg.includes("row-level") ? "Tidak punya izin upload. Coba login ulang." : msg)
+      if (msg.includes("401") || msg.includes("unauthorized")) {
+        setError("Sesi kamu habis. Silakan login ulang.")
+      } else {
+        setError(msg)
+      }
     } finally {
       setUploading(false)
       setProgress(0)

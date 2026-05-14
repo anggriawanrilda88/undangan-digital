@@ -182,13 +182,6 @@ export interface RsvpListResponse {
 export type UploadCategory = "couple_photo" | "qris"
 export type UploadFileType = "image/jpeg" | "image/png" | "image/webp"
 
-export interface PresignRequest {
-  fileType: UploadFileType
-  category: UploadCategory
-}
-
-export interface PresignResult {
-  uploadUrl: string
-  publicUrl: string
-  expiresAt: string
+export interface UploadResult {
+  url: string
 }

@@ -72,6 +72,30 @@ const takenSlugs = ["reza-anisa-2025", "budi-sari", "ahmad-rina"]
 export const handlers = [
 
   // ── AUTH ──
+  http.post(`${BASE}/auth/login`, async ({ request }) => {
+    await delay(200)
+    const body = await request.json() as { email: string; password: string }
+    if (body.password.length < 8) {
+      return HttpResponse.json(
+        { success: false, error: { code: "INVALID_CREDENTIALS", message: "Email atau password salah." } },
+        { status: 401 }
+      )
+    }
+    return HttpResponse.json({
+      success: true,
+      data: { token: "mock-jwt-token-12345", user: { ...mockUser, email: body.email } },
+    })
+  }),
+
+  http.post(`${BASE}/auth/register`, async ({ request }) => {
+    await delay(300)
+    const body = await request.json() as { email: string; password: string }
+    return HttpResponse.json({
+      success: true,
+      data: { token: "mock-jwt-token-new-user", user: { id: `user-${Date.now()}`, email: body.email, createdAt: new Date().toISOString() } },
+    }, { status: 201 })
+  }),
+
   http.get(`${BASE}/auth/me`, async () => {
     await delay(150)
     return HttpResponse.json({ success: true, data: mockUser })
@@ -204,14 +228,12 @@ export const handlers = [
 
   // ── UPLOAD ──
 
-  http.post(`${BASE}/upload/presign`, async () => {
-    await delay(200)
+  http.post(`${BASE}/upload/image`, async () => {
+    await delay(400)
     return HttpResponse.json({
       success: true,
       data: {
-        uploadUrl: "https://mock-storage.supabase.co/upload/presigned-url",
-        publicUrl: "https://mock-storage.supabase.co/storage/v1/object/public/uploads/couple_photo/mock-uuid.jpg",
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        url: "https://mock-minio.anggriawan.my.id/uploads/couple_photo/mock-uuid.webp",
       },
     })
   }),
