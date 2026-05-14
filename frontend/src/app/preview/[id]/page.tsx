@@ -8,7 +8,7 @@ import { ArrowLeft } from "lucide-react"
 
 // Mapping template id → component
 // Tambah template baru di sini kalau ada
-const TEMPLATE_MAP: Record<string, React.ComponentType<{ data: typeof TEMPLATE_PREVIEW_DATA }>> = {
+const TEMPLATE_MAP: Record<string, React.ComponentType<typeof TEMPLATE_PREVIEW_DATA>> = {
   "elegant-garden": TemplateElegantGarden,
   // "modern-serif": TemplateModernSerif,
   // "minimalist-clean": TemplateMinimalistClean,
@@ -53,7 +53,7 @@ export default function PreviewPage({ params }: Props) {
       </div>
 
       {/* Template preview */}
-      <TemplateComponent data={TEMPLATE_PREVIEW_DATA} />
+      <TemplateComponent {...TEMPLATE_PREVIEW_DATA} />
     </div>
   )
 }
