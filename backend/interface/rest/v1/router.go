@@ -70,10 +70,24 @@ func NewRouter(db *gorm.DB) *gin.Engine {
 }
 
 func corsMiddleware() gin.HandlerFunc {
+	allowedOrigins := map[string]bool{
+		"https://undangan-digital.anggriawan.my.id": true,
+		"http://localhost:3000":                    true, // local dev Next.js
+	}
+
+	// Allow additional origin from env (e.g. staging)
+	if extra := os.Getenv("FRONTEND_URL"); extra != "" {
+		allowedOrigins[extra] = true
+	}
+
 	return func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", os.Getenv("ALLOWED_ORIGIN"))
+		origin := c.Request.Header.Get("Origin")
+		if allowedOrigins[origin] {
+			c.Header("Access-Control-Allow-Origin", origin)
+		}
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+		c.Header("Vary", "Origin")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
