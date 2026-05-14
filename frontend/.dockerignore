@@ -1,0 +1,13 @@
+# Docker ignore — jangan copy hal-hal ini ke build context
+node_modules
+.next
+.env.local
+.env*.local
+npm-debug.log*
+*.log
+logs/
+.git
+.gitignore
+README.md
+DEPLOY.md
+ecosystem.config.js

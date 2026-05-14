@@ -4,6 +4,9 @@ import { api } from "@/lib/api"
 import { invitationToTemplateProps } from "@/types/adapters"
 import PublicInvitationPage from "./PublicInvitationPage"
 
+// Force dynamic — halaman ini SSR per-request, tidak di-static generate
+// Karena: (1) data berubah, (2) build time tidak punya env Supabase
+export const dynamic = "force-dynamic"
 interface PageProps {
   params: Promise<{ slug: string }>
 }
