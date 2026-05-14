@@ -37,6 +37,11 @@ func NewRouter(db *gorm.DB) *gin.Engine {
 
 	api := r.Group("/api/v1")
 
+	// Health check
+	r.GET("/api/v1/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	// ── Public routes (no auth) ──────────────────────────────────
 	api.GET("/i/:slug", invHandler.GetPublicBySlug)
 	api.POST("/invitations/:id/rsvp", rsvpHandler.Submit)

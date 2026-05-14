@@ -1,27 +1,10 @@
-# Dependencies
-node_modules/
-vendor/
-
-# Build outputs
-.next/
-dist/
-build/
-
-# Environment files
+# .env dan file secrets — jangan pernah di-commit
 .env
-.env.local
-.env.*.local
+*.env.local
+.env.production
 
-# Go
-*.exe
-*.test
-*.out
+# Binary
+backend/server
 
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
+# Go build cache
+backend/tmp/
