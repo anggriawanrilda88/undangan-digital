@@ -30,7 +30,7 @@ export default function HomePage() {
             Mulai Gratis →
           </Link>
           <Link
-            href="/u/reza-anisa-2025"
+            href="/demo"
             className="px-8 py-3.5 rounded-2xl border border-stone-200 bg-white text-stone-700 font-semibold text-sm hover:bg-stone-50 transition-colors"
           >
             Lihat Contoh Undangan
