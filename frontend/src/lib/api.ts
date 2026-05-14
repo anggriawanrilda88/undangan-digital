@@ -56,14 +56,22 @@ async function apiFetch<T>(
   }
 
   const res = await fetch(`${BASE_URL}${path}`, { ...fetchOptions, headers })
-  const json = (await res.json()) as ApiSuccess<T> | ApiError
+  const json = await res.text()
+  if (!json) throw new ApiException("EMPTY_RESPONSE", `Server error (HTTP ${res.status})`)
 
-  if (!res.ok || !json.success) {
-    const err = (json as ApiError).error
+  let parsed: ApiSuccess<T> | ApiError
+  try {
+    parsed = JSON.parse(json) as ApiSuccess<T> | ApiError
+  } catch {
+    throw new ApiException("INVALID_JSON", `Server error (HTTP ${res.status})`)
+  }
+
+  if (!res.ok || !parsed.success) {
+    const err = (parsed as ApiError).error
     throw new ApiException(err?.code ?? "UNKNOWN", err?.message ?? `HTTP ${res.status}`)
   }
 
-  return (json as ApiSuccess<T>).data
+  return (parsed as ApiSuccess<T>).data
 }
 
 // ─── API Methods ─────────────────────────────────────────
