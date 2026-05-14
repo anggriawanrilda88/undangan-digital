@@ -59,12 +59,14 @@ export default function ImageUpload({
       const compressed = await imageCompression(file, COMPRESSION_OPTIONS)
       setProgress(50)
 
-      // 2. Upload ke backend endpoint (MinIO via backend)
+      // 2. Presign + PUT ke MinIO via helper
       setProgress(70)
-      const { url } = await api.uploadImage(new File([compressed], file.name, { type: "image/webp" }))
+      const publicUrl = await api.uploadImageFile(
+        new File([compressed], file.name, { type: "image/webp" })
+      )
       setProgress(100)
 
-      onChange(url)
+      onChange(publicUrl)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Upload gagal"
       if (msg.includes("401") || msg.includes("unauthorized")) {

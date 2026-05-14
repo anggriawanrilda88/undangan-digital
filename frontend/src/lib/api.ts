@@ -18,6 +18,8 @@ import type {
   RsvpRequest,
   Rsvp,
   RsvpListResponse,
+  PresignRequest,
+  PresignResult,
   ApiSuccess,
   ApiError,
 } from "@/types/api"
@@ -41,21 +43,17 @@ export class ApiException extends Error {
  */
 async function apiFetch<T>(
   path: string,
-  options: RequestInit & { authenticated?: boolean; multipart?: boolean } = {}
+  options: RequestInit & { authenticated?: boolean } = {}
 ): Promise<T> {
-  const { authenticated = true, multipart = false, ...fetchOptions } = options
+  const { authenticated = true, ...fetchOptions } = options
 
   const authH = authenticated ? authHeaders() : {}
 
-  // Untuk multipart/form-data: jangan set Content-Type manual,
-  // biarkan browser set dengan boundary yang benar
-  const headers: Record<string, string> = multipart
-    ? { ...authH, ...(fetchOptions.headers as Record<string, string> ?? {}) }
-    : {
-        "Content-Type": "application/json",
-        ...authH,
-        ...(fetchOptions.headers as Record<string, string> ?? {}),
-      }
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...authH,
+    ...(fetchOptions.headers as Record<string, string> ?? {}),
+  }
 
   const res = await fetch(`${BASE_URL}${path}`, { ...fetchOptions, headers })
   const json = (await res.json()) as ApiSuccess<T> | ApiError
@@ -80,10 +78,10 @@ export const api = {
       authenticated: false,
     }),
 
-  register: (email: string, password: string) =>
+  register: (email: string, password: string, name: string) =>
     apiFetch<{ token: string; user: UserProfile }>("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, name }),
       authenticated: false,
     }),
 
@@ -131,14 +129,35 @@ export const api = {
     return apiFetch<RsvpListResponse>(`/invitations/${invitationId}/rsvp${query}`)
   },
 
-  // ── Image Upload ──
-  uploadImage: (file: File) => {
-    const formData = new FormData()
-    formData.append("file", file)
-    return apiFetch<{ url: string }>("/upload/image", {
+  // ── Image Upload (presigned URL flow via MinIO) ──
+  //
+  // Flow:
+  // 1. presignUpload() → dapat { uploadUrl, publicUrl }
+  // 2. PUT uploadUrl langsung dari browser (binary)
+  // 3. Simpan publicUrl ke invitation
+  presignUpload: (payload: PresignRequest) =>
+    apiFetch<PresignResult>("/upload/presign", {
       method: "POST",
-      body: formData,
-      multipart: true,
+      body: JSON.stringify(payload),
+    }),
+
+  /**
+   * Helper: compress → presign → PUT ke MinIO → return publicUrl
+   * Dipakai oleh ImageUpload component.
+   */
+  uploadImageFile: async (file: File): Promise<string> => {
+    const contentType = (file.type as PresignRequest["contentType"]) || "image/webp"
+    const { uploadUrl, publicUrl } = await api.presignUpload({
+      filename: file.name,
+      contentType,
     })
+    // PUT langsung ke MinIO — no auth header (presigned URL sudah include credentials)
+    const res = await fetch(uploadUrl, {
+      method: "PUT",
+      body: file,
+      headers: { "Content-Type": contentType },
+    })
+    if (!res.ok) throw new ApiException("UPLOAD_FAILED", `MinIO upload failed: HTTP ${res.status}`)
+    return publicUrl
   },
 }

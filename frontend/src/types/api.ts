@@ -25,6 +25,7 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiError
 export interface UserProfile {
   id: string
   email: string
+  name: string
   createdAt: string
 }
 
@@ -182,6 +183,12 @@ export interface RsvpListResponse {
 export type UploadCategory = "couple_photo" | "qris"
 export type UploadFileType = "image/jpeg" | "image/png" | "image/webp"
 
-export interface UploadResult {
-  url: string
+export interface PresignRequest {
+  filename: string
+  contentType: UploadFileType
+}
+
+export interface PresignResult {
+  uploadUrl: string
+  publicUrl: string
 }

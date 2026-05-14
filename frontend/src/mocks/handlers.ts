@@ -89,10 +89,13 @@ export const handlers = [
 
   http.post(`${BASE}/auth/register`, async ({ request }) => {
     await delay(300)
-    const body = await request.json() as { email: string; password: string }
+    const body = await request.json() as { email: string; password: string; name: string }
     return HttpResponse.json({
       success: true,
-      data: { token: "mock-jwt-token-new-user", user: { id: `user-${Date.now()}`, email: body.email, createdAt: new Date().toISOString() } },
+      data: {
+        token: "mock-jwt-token-new-user",
+        user: { id: `user-${Date.now()}`, email: body.email, name: body.name, createdAt: new Date().toISOString() },
+      },
     }, { status: 201 })
   }),
 
@@ -228,13 +231,23 @@ export const handlers = [
 
   // ── UPLOAD ──
 
-  http.post(`${BASE}/upload/image`, async () => {
-    await delay(400)
+  http.post(`${BASE}/upload/presign`, async ({ request }) => {
+    await delay(200)
+    const body = await request.json() as { filename: string; contentType: string }
+    const ext = body.filename.split(".").pop() ?? "webp"
+    const mockId = `mock-${Date.now()}-${Math.random().toString(36).slice(2)}`
     return HttpResponse.json({
       success: true,
       data: {
-        url: "https://mock-minio.anggriawan.my.id/uploads/couple_photo/mock-uuid.webp",
+        uploadUrl: `https://mock-minio.anggriawan.my.id/uploads/${mockId}.${ext}?X-Amz-Signature=mock`,
+        publicUrl: `https://mock-minio.anggriawan.my.id/uploads/${mockId}.${ext}`,
       },
     })
+  }),
+
+  // Mock MinIO PUT (presigned URL target)
+  http.put(`https://mock-minio.anggriawan.my.id/uploads/:filename`, async () => {
+    await delay(300)
+    return new HttpResponse(null, { status: 200 })
   }),
 ]

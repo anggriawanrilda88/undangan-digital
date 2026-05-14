@@ -11,6 +11,7 @@ type AuthMode = "login" | "register"
 
 export default function AuthForm() {
   const [mode, setMode] = useState<AuthMode>("login")
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -26,7 +27,7 @@ export default function AuthForm() {
 
     try {
       if (mode === "register") {
-        const { token } = await api.register(email, password)
+        const { token } = await api.register(email, password, name)
         setAuthToken(token)
         setSuccessMsg("Akun berhasil dibuat! Mengalihkan ke dashboard... 🎉")
         setTimeout(() => { window.location.href = "/dashboard" }, 1000)
@@ -63,6 +64,22 @@ export default function AuthForm() {
 
       {/* Email / Password Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Name — hanya tampil saat register */}
+        {mode === "register" && (
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-stone-600">Nama Lengkap</label>
+            <input
+              type="text"
+              required
+              autoComplete="name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Nama kamu"
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+            />
+          </div>
+        )}
+
         <div className="space-y-1">
           <label className="text-xs font-medium text-stone-600">Email</label>
           <div className="relative">
@@ -139,7 +156,7 @@ export default function AuthForm() {
       <p className="mt-6 text-center text-sm text-stone-500">
         {mode === "login" ? "Belum punya akun?" : "Sudah punya akun?"}{" "}
         <button
-          onClick={() => { setMode(m => m === "login" ? "register" : "login"); setError(null) }}
+          onClick={() => { setMode(m => m === "login" ? "register" : "login"); setError(null); setName("") }}
           className="font-medium text-amber-700 hover:underline"
         >
           {mode === "login" ? "Daftar gratis" : "Masuk"}
