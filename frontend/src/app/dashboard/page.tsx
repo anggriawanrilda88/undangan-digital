@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Plus, FileText, Loader2, ExternalLink } from "lucide-react"
+import { Plus, FileText, Loader2, ExternalLink, Users } from "lucide-react"
 import { api } from "@/lib/api"
 import type { InvitationSummary } from "@/types/api"
 import { logout } from "@/lib/auth"
@@ -103,10 +103,20 @@ export default function DashboardPage() {
                       rel="noopener noreferrer"
                       onClick={e => e.stopPropagation()}
                       className="text-amber-600 hover:text-amber-700"
+                      title="Lihat halaman publik"
                     >
                       <ExternalLink size={15} />
                     </a>
                   )}
+                  <a
+                    href={`/dashboard/invitations/${inv.id}/rsvp`}
+                    onClick={e => e.stopPropagation()}
+                    className="flex items-center gap-1 text-xs text-stone-500 hover:text-amber-700 transition-colors"
+                    title="Lihat data RSVP"
+                  >
+                    <Users size={13} />
+                    {inv.rsvpCount}
+                  </a>
                   <span className="text-stone-300 text-xs">Edit →</span>
                 </div>
               </motion.div>

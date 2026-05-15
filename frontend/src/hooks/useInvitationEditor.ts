@@ -4,22 +4,30 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { api } from "@/lib/api"
 import { invitationToTemplateProps, templatePropsToUpdateRequest } from "@/types/adapters"
 import type { TemplateProps } from "@/types/template"
+import type { InvitationStatus } from "@/types/api"
 
 type SaveStatus = "idle" | "saving" | "saved" | "error"
+type PublishStatus = "idle" | "publishing" | "done" | "error"
 
 interface UseInvitationEditorReturn {
   data: TemplateProps | null
   loading: boolean
   saveStatus: SaveStatus
+  publishStatus: PublishStatus
+  invitationStatus: InvitationStatus
   error: string | null
   updateData: (updater: (prev: TemplateProps) => TemplateProps) => void
   save: () => Promise<void>
+  publish: () => Promise<void>
+  unpublish: () => Promise<void>
 }
 
 export function useInvitationEditor(invitationId: string): UseInvitationEditorReturn {
   const [data, setData] = useState<TemplateProps | null>(null)
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
+  const [publishStatus, setPublishStatus] = useState<PublishStatus>("idle")
+  const [invitationStatus, setInvitationStatus] = useState<InvitationStatus>("draft")
   const [error, setError] = useState<string | null>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestData = useRef<TemplateProps | null>(null)
@@ -36,6 +44,7 @@ export function useInvitationEditor(invitationId: string): UseInvitationEditorRe
         const props = invitationToTemplateProps(inv)
         setData(props)
         latestData.current = props
+        setInvitationStatus(inv.status)
       })
       .catch(err => {
         if (cancelled) return
@@ -61,7 +70,38 @@ export function useInvitationEditor(invitationId: string): UseInvitationEditorRe
       setTimeout(() => setSaveStatus("idle"), 3000)
     } catch (err) {
       setSaveStatus("error")
-      console.error("Save failed:", err)
+      setTimeout(() => setSaveStatus("idle"), 5000)
+      throw err // re-throw supaya EditorShell bisa show toast
+    }
+  }, [invitationId])
+
+  // Publish undangan
+  const publish = useCallback(async () => {
+    setPublishStatus("publishing")
+    try {
+      await api.updateInvitation(invitationId, { status: "published" })
+      setInvitationStatus("published")
+      setPublishStatus("done")
+      setTimeout(() => setPublishStatus("idle"), 3000)
+    } catch (err) {
+      setPublishStatus("error")
+      setTimeout(() => setPublishStatus("idle"), 5000)
+      throw err
+    }
+  }, [invitationId])
+
+  // Unpublish (kembali ke draft)
+  const unpublish = useCallback(async () => {
+    setPublishStatus("publishing")
+    try {
+      await api.updateInvitation(invitationId, { status: "draft" })
+      setInvitationStatus("draft")
+      setPublishStatus("done")
+      setTimeout(() => setPublishStatus("idle"), 2000)
+    } catch (err) {
+      setPublishStatus("error")
+      setTimeout(() => setPublishStatus("idle"), 5000)
+      throw err
     }
   }, [invitationId])
 
@@ -89,5 +129,5 @@ export function useInvitationEditor(invitationId: string): UseInvitationEditorRe
     }
   }, [])
 
-  return { data, loading, saveStatus, error, updateData, save }
+  return { data, loading, saveStatus, publishStatus, invitationStatus, error, updateData, save, publish, unpublish }
 }

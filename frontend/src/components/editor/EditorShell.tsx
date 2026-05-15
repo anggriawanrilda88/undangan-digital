@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Eye, EyeOff, Save, Check, Loader2, AlertCircle } from "lucide-react"
+import { Eye, EyeOff, Save, Check, Loader2, AlertCircle, ChevronLeft, Rocket, CheckCircle2 } from "lucide-react"
+import Link from "next/link"
 import type { TemplateProps } from "@/types/template"
+import type { InvitationStatus } from "@/types/api"
 import { cn } from "@/lib/utils"
 import ImageUpload from "@/components/ui/ImageUpload"
 
@@ -14,30 +16,95 @@ interface EditorShellProps {
   data: TemplateProps
   /** Status save */
   saveStatus: "idle" | "saving" | "saved" | "error"
+  /** Status publish */
+  publishStatus: "idle" | "publishing" | "done" | "error"
+  /** Status undangan saat ini */
+  invitationStatus: InvitationStatus
   /** Callback update data */
   onUpdate: (updater: (prev: TemplateProps) => TemplateProps) => void
   /** Manual save */
   onSave: () => Promise<void>
+  /** Publish undangan */
+  onPublish: () => Promise<void>
+  /** Unpublish undangan */
+  onUnpublish: () => Promise<void>
 }
 
 export default function EditorShell({
   TemplateComponent,
   data,
   saveStatus,
+  publishStatus,
+  invitationStatus,
   onUpdate,
   onSave,
+  onPublish,
+  onUnpublish,
 }: EditorShellProps) {
   const [isPreviewMode, setIsPreviewMode] = useState(false)
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+
+  const isPublished = invitationStatus === "published"
+
+  // FE-BUG-007: Validasi form sebelum save
+  const handleSave = async () => {
+    const errors: string[] = []
+    if (!data.couple.groomFullName && !data.couple.groomName)
+      errors.push("Nama pengantin pria wajib diisi")
+    if (!data.couple.brideFullName && !data.couple.brideName)
+      errors.push("Nama pengantin wanita wajib diisi")
+    if (!data.events.reception.date)
+      errors.push("Tanggal resepsi wajib diisi")
+    if (!data.events.reception.venue)
+      errors.push("Nama venue resepsi wajib diisi")
+
+    if (errors.length > 0) {
+      setValidationErrors(errors)
+      setTimeout(() => setValidationErrors([]), 5000)
+      return
+    }
+    setValidationErrors([])
+    try {
+      await onSave()
+    } catch {
+      // error sudah di-handle di hook (saveStatus = "error")
+    }
+  }
+
+  const handlePublish = async () => {
+    setShowPublishConfirm(false)
+    try {
+      await onPublish()
+    } catch {
+      // error sudah di-handle di hook
+    }
+  }
+
+  const handleUnpublish = async () => {
+    try {
+      await onUnpublish()
+    } catch {
+      // error sudah di-handle di hook
+    }
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col">
       {/* === TOPBAR === */}
       <header className="sticky top-0 z-50 bg-white border-b border-stone-200 px-4 h-14 flex items-center justify-between gap-4 shadow-sm">
-        <h1 className="font-semibold text-stone-800 text-sm truncate">✏️ Edit Undangan</h1>
+        {/* FE-BUG-006: Back navigation */}
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-800 transition-colors shrink-0"
+        >
+          <ChevronLeft size={14} />
+          Dashboard
+        </Link>
         <div className="flex items-center gap-2">
           <SaveIndicator status={saveStatus} />
           <button
-            onClick={onSave}
+            onClick={handleSave}
             disabled={saveStatus === "saving"}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-50 transition-colors"
           >
@@ -51,13 +118,60 @@ export default function EditorShell({
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
               isPreviewMode
                 ? "bg-amber-100 text-amber-800 hover:bg-amber-200"
-                : "bg-amber-600 text-white hover:bg-amber-700"
+                : "bg-stone-100 text-stone-700 hover:bg-stone-200"
             )}
           >
             {isPreviewMode ? <><EyeOff size={13} /> Kembali Edit</> : <><Eye size={13} /> Preview</>}
           </button>
+          {/* FE-BUG-001: Tombol Publish/Unpublish */}
+          {isPublished ? (
+            <div className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 px-2.5 py-1.5 rounded-lg">
+                <CheckCircle2 size={12} />
+                Published
+              </span>
+              <button
+                onClick={handleUnpublish}
+                disabled={publishStatus === "publishing"}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 disabled:opacity-50 transition-colors"
+              >
+                {publishStatus === "publishing" ? <Loader2 size={13} className="animate-spin" /> : null}
+                Unpublish
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowPublishConfirm(true)}
+              disabled={publishStatus === "publishing"}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 transition-colors"
+            >
+              {publishStatus === "publishing"
+                ? <><Loader2 size={13} className="animate-spin" /> Mempublish...</>
+                : <><Rocket size={13} /> Publish</>
+              }
+            </button>
+          )}
         </div>
       </header>
+
+      {/* FE-BUG-007: Validation error banner */}
+      <AnimatePresence>
+        {validationErrors.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-red-50 border-b border-red-200 px-4 py-2.5"
+          >
+            <div className="flex items-start gap-2 text-xs text-red-700">
+              <AlertCircle size={14} className="mt-0.5 shrink-0" />
+              <ul className="space-y-0.5">
+                {validationErrors.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* === CONTENT === */}
       <div className="flex-1 relative overflow-hidden">
@@ -82,12 +196,75 @@ export default function EditorShell({
               transition={{ duration: 0.22 }}
               className="absolute inset-0 overflow-y-auto"
             >
-              <EditorForm data={data} onUpdate={onUpdate} onSave={onSave} />
+              <EditorForm data={data} onUpdate={onUpdate} onSave={handleSave} />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* FE-BUG-001: Publish confirm modal */}
+      <AnimatePresence>
+        {showPublishConfirm && (
+          <PublishConfirmModal
+            slug={data.meta.slug}
+            onConfirm={handlePublish}
+            onCancel={() => setShowPublishConfirm(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  )
+}
+
+// ─── Publish Confirm Modal ────────────────────────────────
+
+function PublishConfirmModal({
+  onConfirm, onCancel, slug,
+}: {
+  onConfirm: () => void
+  onCancel: () => void
+  slug: string
+}) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://undangan-digital.anggriawan.my.id"
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/40 z-40"
+        onClick={onCancel}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="fixed inset-x-4 top-1/3 z-50 bg-white rounded-2xl p-6 shadow-xl max-w-sm mx-auto"
+      >
+        <div className="text-2xl mb-3">🚀</div>
+        <h3 className="font-semibold text-stone-800 mb-1">Publish Undangan?</h3>
+        <p className="text-xs text-stone-500 mb-3">
+          Undangan akan bisa diakses di:
+        </p>
+        <p className="text-xs font-mono bg-stone-50 rounded-lg px-3 py-2 text-stone-700 mb-4 break-all">
+          {baseUrl}/u/{slug}
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors"
+          >
+            Batal
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+          >
+            Ya, Publish!
+          </button>
+        </div>
+      </motion.div>
+    </>
   )
 }
 
@@ -131,6 +308,34 @@ function EditorForm({
   const setPhoto = <K extends keyof TemplateProps["photo"]>(key: K, url: string | undefined) => {
     onUpdate(prev => ({ ...prev, photo: { ...prev.photo, [key]: url } }))
     setTimeout(() => onSave(), 300) // beri waktu state update dulu
+  }
+
+  // FE-BUG-003: Slug availability check state
+  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken">("idle")
+  const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const originalSlug = useRef(data.meta.slug)
+
+  const handleSlugChange = (raw: string) => {
+    const slug = raw.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
+    set("meta", { ...data.meta, slug })
+
+    if (slugTimerRef.current) clearTimeout(slugTimerRef.current)
+
+    // Kalau sama dengan slug asli, skip check
+    if (slug === originalSlug.current || slug.length < 3) {
+      setSlugStatus("idle")
+      return
+    }
+
+    setSlugStatus("checking")
+    slugTimerRef.current = setTimeout(async () => {
+      try {
+        const result = await import("@/lib/api").then(m => m.api.checkSlug(slug))
+        setSlugStatus(result.available ? "available" : "taken")
+      } catch {
+        setSlugStatus("idle")
+      }
+    }, 400)
   }
 
   return (
@@ -282,15 +487,27 @@ function EditorForm({
             </span>
             <input
               value={data.meta.slug}
-              onChange={e => set("meta", {
-                ...data.meta,
-                slug: e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
-              })}
+              onChange={e => handleSlugChange(e.target.value)}
               placeholder="nama-pasangan"
               className="flex-1 px-3 py-2.5 text-sm focus:outline-none bg-transparent"
             />
           </div>
-          {/* TODO: slug availability check (debounce 400ms → GET /api/v1/slugs/check) */}
+          {/* FE-BUG-003: Slug availability indicator */}
+          {slugStatus === "checking" && (
+            <p className="flex items-center gap-1 text-xs text-stone-400 mt-1">
+              <Loader2 size={11} className="animate-spin" /> Mengecek ketersediaan...
+            </p>
+          )}
+          {slugStatus === "available" && (
+            <p className="flex items-center gap-1 text-xs text-green-600 mt-1">
+              <Check size={11} /> <span className="font-mono">{data.meta.slug}</span> tersedia
+            </p>
+          )}
+          {slugStatus === "taken" && (
+            <p className="flex items-center gap-1 text-xs text-red-500 mt-1">
+              <AlertCircle size={11} /> Slug ini sudah dipakai, coba yang lain
+            </p>
+          )}
         </Field>
 
         <Field label="Pesan Pembuka (opsional)">

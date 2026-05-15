@@ -22,8 +22,12 @@ export default function DemoPage() {
       TemplateComponent={TemplateElegantGarden}
       data={data}
       saveStatus={saveStatus}
+      publishStatus="idle"
+      invitationStatus="draft"
       onUpdate={fn => setData(prev => fn(prev))}
       onSave={handleSave}
+      onPublish={async () => { /* demo mode */ }}
+      onUnpublish={async () => { /* demo mode */ }}
     />
   )
 }

@@ -8,10 +8,14 @@ import type { RsvpRequest } from "@/types/api"
 import { api } from "@/lib/api"
 import { shareUrl, whatsappShareText } from "@/lib/utils"
 import TemplateElegantGarden from "@/components/templates/TemplateElegantGarden"
+import TemplateModernSerif from "@/components/templates/TemplateModernSerif"
+import TemplateRoyalBatik from "@/components/templates/TemplateRoyalBatik"
 
 // Template registry (sama dengan editor)
 const TEMPLATE_MAP: Record<string, React.ComponentType<TemplateProps>> = {
   "elegant-garden": TemplateElegantGarden,
+  "modern-serif": TemplateModernSerif,
+  "royal-batik": TemplateRoyalBatik,
 }
 
 interface PublicInvitationPageProps {

@@ -4,13 +4,15 @@ import { use } from "react"
 import { Loader2, AlertCircle } from "lucide-react"
 import EditorShell from "@/components/editor/EditorShell"
 import TemplateElegantGarden from "@/components/templates/TemplateElegantGarden"
+import TemplateModernSerif from "@/components/templates/TemplateModernSerif"
+import TemplateRoyalBatik from "@/components/templates/TemplateRoyalBatik"
 import { useInvitationEditor } from "@/hooks/useInvitationEditor"
 
 // Template registry — tambah template baru di sini
 const TEMPLATE_MAP: Record<string, React.ComponentType<import("@/types/template").TemplateProps>> = {
   "elegant-garden": TemplateElegantGarden,
-  // "modern-serif": TemplateModernSerif,   // Phase 1
-  // "royal-batik": TemplateRoyalBatik,     // Phase 1
+  "modern-serif": TemplateModernSerif,
+  "royal-batik": TemplateRoyalBatik,
 }
 
 const FALLBACK_TEMPLATE = TemplateElegantGarden
@@ -21,7 +23,7 @@ interface PageProps {
 
 export default function EditorPage({ params }: PageProps) {
   const { id } = use(params)
-  const { data, loading, saveStatus, error, updateData, save } = useInvitationEditor(id)
+  const { data, loading, saveStatus, publishStatus, invitationStatus, error, updateData, save, publish, unpublish } = useInvitationEditor(id)
 
   if (loading) {
     return (
@@ -57,8 +59,12 @@ export default function EditorPage({ params }: PageProps) {
       TemplateComponent={TemplateComponent}
       data={data}
       saveStatus={saveStatus}
+      publishStatus={publishStatus}
+      invitationStatus={invitationStatus}
       onUpdate={updateData}
       onSave={save}
+      onPublish={publish}
+      onUnpublish={unpublish}
     />
   )
 }
