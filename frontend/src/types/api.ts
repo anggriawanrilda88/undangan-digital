@@ -25,11 +25,38 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiError
 export interface UserProfile {
   id: string
   email: string
-  name: string
   createdAt: string
 }
 
 // ─── Invitation Config (template settings) ──────────────
+
+export interface GalleryPhotoApi {
+  url: string
+  caption?: string
+}
+
+export interface StorySceneApi {
+  illustrationUrl: string
+  caption: string
+}
+
+export interface VerseSectionApi {
+  arabic: string
+  translation: string
+  source?: string
+}
+
+export interface OpeningConfigApi {
+  showLoadingScreen: boolean
+  loadingNames?: string
+  loadingDate?: string
+  bowColor?: string
+}
+
+export interface ProposalConfigApi {
+  quote?: string
+  reply?: string
+}
 
 export interface InvitationConfig {
   templateId: string
@@ -42,6 +69,15 @@ export interface InvitationConfig {
     body?: string
   }
   couplePhoto?: string
+  groomPhoto?: string
+  bridePhoto?: string
+  proposalPhoto?: string
+  illustrationImage?: string
+  gallery?: GalleryPhotoApi[]
+  story?: StorySceneApi[]
+  verse?: VerseSectionApi
+  opening?: OpeningConfigApi
+  proposal?: ProposalConfigApi
   music?: {
     enabled: boolean
     url?: string | null
@@ -65,6 +101,8 @@ export interface BankAccountApi {
 export interface InvitationContent {
   groomName: string
   brideName: string
+  groomRole?: string             // Gelar (e.g. "S.E")
+  brideRole?: string             // Gelar (e.g. "S.Ak")
   groomParents?: string
   brideParents?: string
   akadDate?: string | null       // ISO 8601 date-time
@@ -184,11 +222,12 @@ export type UploadCategory = "couple_photo" | "qris"
 export type UploadFileType = "image/jpeg" | "image/png" | "image/webp"
 
 export interface PresignRequest {
-  filename: string
-  contentType: UploadFileType
+  fileType: UploadFileType
+  category: UploadCategory
 }
 
 export interface PresignResult {
   uploadUrl: string
   publicUrl: string
+  expiresAt: string
 }

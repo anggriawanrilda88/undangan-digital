@@ -7,7 +7,7 @@
  */
 
 import type { Invitation, PublicInvitation, InvitationContent, InvitationConfig, UpdateInvitationRequest } from "./api"
-import type { TemplateProps, BankAccount } from "./template"
+import type { TemplateProps, BankAccount, GalleryPhoto, StoryScene } from "./template"
 
 // ─── API → TemplateProps ─────────────────────────────────
 
@@ -22,14 +22,20 @@ export function invitationToTemplateProps(invitation: Invitation | PublicInvitat
     couple: {
       groomName: extractFirstName(content.groomName),
       groomFullName: content.groomName,
+      groomRole: content.groomRole,
       groomParents: content.groomParents,
       brideName: extractFirstName(content.brideName),
       brideFullName: content.brideName,
+      brideRole: content.brideRole,
       brideParents: content.brideParents,
     },
 
     photo: {
       couple: config.couplePhoto,
+      groom: config.groomPhoto,
+      bride: config.bridePhoto,
+      proposal: config.proposalPhoto,
+      illustration: config.illustrationImage,
     },
 
     events: {
@@ -55,9 +61,46 @@ export function invitationToTemplateProps(invitation: Invitation | PublicInvitat
       bankAccounts: content.digitalEnvelope.bankAccounts?.map(acc => ({
         bankName: acc.bankName,
         accountNumber: acc.accountNumber,
-        accountHolder: acc.accountName,  // API: accountName → FE: accountHolder
+        accountHolder: acc.accountName,
       } satisfies BankAccount)),
       qrisImageUrl: content.digitalEnvelope.qrisImageUrl ?? undefined,
+    } : undefined,
+
+    gallery: config.gallery?.length ? {
+      photos: config.gallery.map(g => ({
+        url: g.url,
+        caption: g.caption,
+      } satisfies GalleryPhoto)),
+    } : undefined,
+
+    story: config.story?.length ? {
+      scenes: config.story.map(s => ({
+        illustrationUrl: s.illustrationUrl,
+        caption: s.caption,
+      } satisfies StoryScene)),
+    } : undefined,
+
+    verse: config.verse ? {
+      arabic: config.verse.arabic,
+      translation: config.verse.translation,
+      source: config.verse.source,
+    } : undefined,
+
+    proposal: config.proposal ? {
+      quote: config.proposal.quote,
+      reply: config.proposal.reply,
+    } : undefined,
+
+    opening: config.opening ? {
+      showLoadingScreen: config.opening.showLoadingScreen,
+      loadingNames: config.opening.loadingNames,
+      loadingDate: config.opening.loadingDate,
+      bowColor: config.opening.bowColor,
+    } : undefined,
+
+    music: config.music ? {
+      enabled: config.music.enabled,
+      url: config.music.url ?? undefined,
     } : undefined,
 
     colors: {
@@ -88,18 +131,44 @@ export function templatePropsToUpdateRequest(props: TemplateProps): UpdateInvita
   const config: InvitationConfig = {
     templateId: props.meta.templateId,
     couplePhoto: props.photo.couple,
+    groomPhoto: props.photo.groom,
+    bridePhoto: props.photo.bride,
+    proposalPhoto: props.photo.proposal,
+    illustrationImage: props.photo.illustration,
     colors: {
       primary: props.colors.primary,
       secondary: props.colors.secondary,
     },
     fonts: undefined,
-    music: { enabled: false },
+    gallery: props.gallery?.photos?.map(p => ({ url: p.url, caption: p.caption })),
+    story: props.story?.scenes?.map(s => ({ illustrationUrl: s.illustrationUrl, caption: s.caption })),
+    verse: props.verse ? {
+      arabic: props.verse.arabic,
+      translation: props.verse.translation,
+      source: props.verse.source,
+    } : undefined,
+    opening: props.opening ? {
+      showLoadingScreen: props.opening.showLoadingScreen,
+      loadingNames: props.opening.loadingNames,
+      loadingDate: props.opening.loadingDate,
+      bowColor: props.opening.bowColor,
+    } : undefined,
+    proposal: props.proposal ? {
+      quote: props.proposal.quote,
+      reply: props.proposal.reply,
+    } : undefined,
+    music: props.music ? {
+      enabled: props.music.enabled,
+      url: props.music.url ?? null,
+    } : { enabled: false },
   }
 
   // Full InvitationContent — semua field wajib ada, null untuk yang tidak diisi
   const content: InvitationContent = {
     groomName: props.couple.groomFullName ?? props.couple.groomName,
     brideName: props.couple.brideFullName ?? props.couple.brideName,
+    groomRole: props.couple.groomRole,
+    brideRole: props.couple.brideRole,
     groomParents: props.couple.groomParents,
     brideParents: props.couple.brideParents,
     openingMessage: props.meta.greeting,

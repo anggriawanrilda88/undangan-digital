@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Plus, FileText, Loader2, ExternalLink, Users } from "lucide-react"
+import { FileText, Loader2, ExternalLink, Users } from "lucide-react"
 import { api } from "@/lib/api"
 import type { InvitationSummary } from "@/types/api"
 import { logout } from "@/lib/auth"
@@ -16,7 +16,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     api.listInvitations()
-      .then(setInvitations)
+      .then(inv => {
+        setInvitations(inv)
+        // DEF-S02-01: individual_customer → auto-redirect ke editor jika sudah ada undangan
+        // Kalau belum ada → redirect ke template picker (buat undangan pertama)
+        if (inv.length === 0) {
+          router.replace("/dashboard/templates")
+        } else {
+          router.replace(`/dashboard/editor/${inv[0].id}`)
+        }
+      })
       .catch(err => {
         if (err?.code === "UNAUTHORIZED" || err?.message?.includes("401")) {
           logout()
@@ -25,105 +34,36 @@ export default function DashboardPage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [router])
 
-  return (
-    <main className="min-h-screen bg-stone-50">
-      {/* Header */}
-      <header className="bg-white border-b border-stone-100 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">💍</span>
-          <span className="font-semibold text-stone-800 text-sm">Undangan Digital</span>
+  // Loading state sementara redirect diproses
+  if (loading || invitations.length > 0 || (!loading && !error)) {
+    return (
+      <main className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <Loader2 size={28} className="animate-spin text-amber-500 mx-auto" />
+          <p className="text-sm text-stone-500">Memuat undangan kamu...</p>
         </div>
-        <button
-          onClick={logout}
-          className="text-xs text-stone-400 hover:text-stone-600 transition-colors"
-        >
-          Keluar
-        </button>
-      </header>
+      </main>
+    )
+  }
 
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        {/* Title */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-stone-800">Undangan Saya</h1>
-            <p className="text-sm text-stone-500 mt-1">Kelola semua undangan digitalmu di sini.</p>
-          </div>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => router.push("/dashboard/templates")}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 transition-colors shadow-sm shadow-amber-200"
+  // Error state
+  if (error) {
+    return (
+      <main className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <p className="text-red-500 text-sm">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-xs text-amber-700 hover:underline"
           >
-            <Plus size={15} />
-            Buat Baru
-          </motion.button>
+            Coba lagi
+          </button>
         </div>
+      </main>
+    )
+  }
 
-        {/* Content */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20 text-stone-400">
-            <Loader2 size={24} className="animate-spin" />
-          </div>
-        ) : error ? (
-          <div className="text-center py-20 text-red-500 text-sm">{error}</div>
-        ) : invitations.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-20"
-          >
-            <FileText size={40} className="mx-auto text-stone-200 mb-4" strokeWidth={1.5} />
-            <p className="text-stone-500 font-medium">Belum ada undangan</p>
-            <p className="text-stone-400 text-sm mt-1">Klik "Buat Baru" untuk mulai.</p>
-          </motion.div>
-        ) : (
-          <div className="space-y-3">
-            {invitations.map(inv => (
-              <motion.div
-                key={inv.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-stone-100 p-5 flex items-center justify-between hover:border-amber-200 transition-colors cursor-pointer"
-                onClick={() => router.push(`/dashboard/editor/${inv.id}`)}
-              >
-                <div>
-                  <p className="font-semibold text-stone-800 text-sm">
-                    {inv.groomName} & {inv.brideName}
-                  </p>
-                  <p className="text-xs text-stone-400 mt-0.5">
-                    /{inv.slug} · {inv.status === "published" ? "✅ Published" : "📝 Draft"} · {inv.rsvpCount} RSVP
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {inv.status === "published" && (
-                    <a
-                      href={`/u/${inv.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={e => e.stopPropagation()}
-                      className="text-amber-600 hover:text-amber-700"
-                      title="Lihat halaman publik"
-                    >
-                      <ExternalLink size={15} />
-                    </a>
-                  )}
-                  <a
-                    href={`/dashboard/invitations/${inv.id}/rsvp`}
-                    onClick={e => e.stopPropagation()}
-                    className="flex items-center gap-1 text-xs text-stone-500 hover:text-amber-700 transition-colors"
-                    title="Lihat data RSVP"
-                  >
-                    <Users size={13} />
-                    {inv.rsvpCount}
-                  </a>
-                  <span className="text-stone-300 text-xs">Edit →</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
-  )
+  return null
 }

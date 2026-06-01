@@ -15,7 +15,7 @@ export interface TemplateOption {
   isPremium: boolean
 }
 
-// Data template yang tersedia di MVP (3 template)
+// Data template yang tersedia di MVP (4 template)
 export const AVAILABLE_TEMPLATES: TemplateOption[] = [
   {
     id: "elegant-garden",
@@ -23,6 +23,14 @@ export const AVAILABLE_TEMPLATES: TemplateOption[] = [
     description: "Elegan dan romantis dengan nuansa floral warm earth tones.",
     thumbnail: "/images/templates/elegant-garden-thumb.jpg",
     tags: ["Elegan", "Floral", "Romantis"],
+    isPremium: false,
+  },
+  {
+    id: "cartoon-whimsical",
+    name: "Cartoon Whimsical",
+    description: "Ceria dan playful dengan animasi GSAP, 13 slide interaktif bertema cartoon.",
+    thumbnail: "/images/templates/cartoon-whimsical-thumb.jpg",
+    tags: ["Animasi", "Cartoon", "Interaktif", "Multi-slide"],
     isPremium: false,
   },
   {

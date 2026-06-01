@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="533" viewBox="0 0 400 533">
+  <defs>
+    <pattern id="batikDot" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="6" cy="6" r="1.2" fill="#7C3D12" opacity="0.18"/>
+    </pattern>
+    <pattern id="batikDiamond" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <polygon points="10,2 18,10 10,18 2,10" fill="none" stroke="#92400E" stroke-width="0.6" opacity="0.2"/>
+    </pattern>
+  </defs>
+
+  <!-- Background warm gold -->
+  <rect width="400" height="533" fill="#FFFBEB"/>
+
+  <!-- Batik background texture -->
+  <rect width="400" height="533" fill="url(#batikDiamond)"/>
+
+  <!-- Outer ornamental border -->
+  <rect x="14" y="14" width="372" height="505" rx="3" fill="none" stroke="#92400E" stroke-width="1.5" opacity="0.4"/>
+  <rect x="20" y="20" width="360" height="493" rx="2" fill="none" stroke="#92400E" stroke-width="0.8" opacity="0.25"/>
+
+  <!-- Top batik wavy band -->
+  <rect x="14" y="14" width="372" height="42" fill="#92400E" opacity="0.08"/>
+  <path d="M14 35 Q50 20 90 35 Q130 50 170 35 Q210 20 250 35 Q290 50 330 35 Q360 20 386 35" stroke="#7C3D12" stroke-width="1.8" fill="none" opacity="0.5"/>
+  <path d="M14 45 Q50 30 90 45 Q130 60 170 45 Q210 30 250 45 Q290 60 330 45 Q360 30 386 45" stroke="#7C3D12" stroke-width="1" fill="none" opacity="0.3"/>
+  <!-- Wavy band dots -->
+  <circle cx="90" cy="35" r="3.5" fill="#92400E" opacity="0.45"/>
+  <circle cx="170" cy="35" r="3.5" fill="#92400E" opacity="0.45"/>
+  <circle cx="250" cy="35" r="3.5" fill="#92400E" opacity="0.45"/>
+  <circle cx="330" cy="35" r="3.5" fill="#92400E" opacity="0.45"/>
+
+  <!-- "Bismillah" decorative area -->
+  <text x="200" y="76" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#92400E" opacity="0.7" letter-spacing="1">﷽</text>
+
+  <!-- Corner ornaments (batik-inspired) -->
+  <!-- Top-left -->
+  <path d="M30 30 Q45 30 45 45" fill="none" stroke="#92400E" stroke-width="2" opacity="0.4"/>
+  <circle cx="38" cy="38" r="3" fill="#92400E" opacity="0.25"/>
+  <!-- Top-right -->
+  <path d="M370 30 Q355 30 355 45" fill="none" stroke="#92400E" stroke-width="2" opacity="0.4"/>
+  <circle cx="362" cy="38" r="3" fill="#92400E" opacity="0.25"/>
+  <!-- Bottom-left -->
+  <path d="M30 503 Q45 503 45 488" fill="none" stroke="#92400E" stroke-width="2" opacity="0.4"/>
+  <circle cx="38" cy="495" r="3" fill="#92400E" opacity="0.25"/>
+  <!-- Bottom-right -->
+  <path d="M370 503 Q355 503 355 488" fill="none" stroke="#92400E" stroke-width="2" opacity="0.4"/>
+  <circle cx="362" cy="495" r="3" fill="#92400E" opacity="0.25"/>
+
+  <!-- Photo frame — octagonal -->
+  <polygon points="200,98 232,106 248,135 248,175 232,204 200,212 168,204 152,175 152,135 168,106" fill="#F5D9A8" stroke="#92400E" stroke-width="1.5" opacity="0.8"/>
+  <polygon points="200,103 228,110 243,137 243,173 228,200 200,207 172,200 157,173 157,137 172,110" fill="#EFC98A" opacity="0.5"/>
+  <!-- Silhouette inside frame -->
+  <ellipse cx="191" cy="162" rx="16" ry="20" fill="#C9913A" opacity="0.45"/>
+  <circle cx="191" cy="146" r="10" fill="#C9913A" opacity="0.45"/>
+  <ellipse cx="209" cy="165" rx="16" ry="20" fill="#92400E" opacity="0.38"/>
+  <circle cx="209" cy="148" r="10" fill="#92400E" opacity="0.38"/>
+
+  <!-- Batik floral ornament below photo -->
+  <path d="M170 220 Q185 210 200 220 Q215 230 230 220" stroke="#92400E" stroke-width="1.2" fill="none" opacity="0.5"/>
+  <circle cx="200" cy="220" r="3" fill="#92400E" opacity="0.4"/>
+
+  <!-- "Pernikahan" label -->
+  <text x="200" y="248" text-anchor="middle" font-family="Georgia, serif" font-size="9.5" fill="#92400E" letter-spacing="4" opacity="0.75">PERNIKAHAN</text>
+
+  <!-- Groom name -->
+  <text x="200" y="278" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-weight="bold" fill="#451A03">Rizky</text>
+
+  <!-- Putra/Putri ornamental line -->
+  <line x1="60" y1="293" x2="155" y2="293" stroke="#92400E" stroke-width="0.8" opacity="0.4"/>
+  <text x="200" y="298" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#92400E" opacity="0.8">&amp;</text>
+  <line x1="245" y1="293" x2="340" y2="293" stroke="#92400E" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- Bride name -->
+  <text x="200" y="322" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-weight="bold" fill="#451A03">Aulia</text>
+
+  <!-- Center batik ornament -->
+  <polygon points="200,342 208,350 200,358 192,350" fill="#92400E" opacity="0.35"/>
+  <circle cx="200" cy="350" r="2" fill="#92400E" opacity="0.5"/>
+
+  <!-- Date -->
+  <text x="200" y="376" text-anchor="middle" font-family="Georgia, serif" font-size="11.5" fill="#451A03" letter-spacing="1.5" opacity="0.9">Sabtu, 20 September 2026</text>
+
+  <!-- Small horizontal batik band divider -->
+  <rect x="60" y="388" width="280" height="10" fill="#92400E" opacity="0.07"/>
+  <path d="M60 393 Q90 386 120 393 Q150 400 180 393 Q210 386 240 393 Q270 400 300 393 Q330 386 340 393" stroke="#92400E" stroke-width="1" fill="none" opacity="0.35"/>
+
+  <!-- Venue -->
+  <text x="200" y="414" text-anchor="middle" font-family="Georgia, serif" font-size="9.5" fill="#92400E" letter-spacing="3" opacity="0.7">RESEPSI</text>
+  <text x="200" y="433" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#451A03" font-weight="bold" opacity="0.9">Gedung Serbaguna</text>
+  <text x="200" y="449" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#78350F" opacity="0.7">Jl. Raya No. 1, Jakarta</text>
+
+  <!-- Bottom batik wavy band -->
+  <rect x="14" y="475" width="372" height="42" fill="#92400E" opacity="0.08"/>
+  <path d="M14 490 Q50 475 90 490 Q130 505 170 490 Q210 475 250 490 Q290 505 330 490 Q360 475 386 490" stroke="#7C3D12" stroke-width="1.8" fill="none" opacity="0.5"/>
+  <path d="M14 500 Q50 485 90 500 Q130 515 170 500 Q210 485 250 500 Q290 515 330 500 Q360 485 386 500" stroke="#7C3D12" stroke-width="1" fill="none" opacity="0.3"/>
+  <circle cx="90" cy="490" r="3.5" fill="#92400E" opacity="0.45"/>
+  <circle cx="170" cy="490" r="3.5" fill="#92400E" opacity="0.45"/>
+  <circle cx="250" cy="490" r="3.5" fill="#92400E" opacity="0.45"/>
+  <circle cx="330" cy="490" r="3.5" fill="#92400E" opacity="0.45"/>
+</svg>

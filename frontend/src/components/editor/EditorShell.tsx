@@ -360,11 +360,26 @@ function EditorForm({
             placeholder="Nama lengkap pengantin pria"
           />
         </Field>
+        <Field label="Gelar Pria (opsional — e.g. S.E)">
+          <Input
+            value={data.couple.groomRole ?? ""}
+            onChange={v => set("couple", { ...data.couple, groomRole: v || undefined })}
+            placeholder="S.E"
+          />
+        </Field>
         <Field label="Nama Orang Tua Pria (opsional)">
           <Input
             value={data.couple.groomParents ?? ""}
             onChange={v => set("couple", { ...data.couple, groomParents: v })}
             placeholder="Putra dari Bapak ... & Ibu ..."
+          />
+        </Field>
+        <Field label="Foto Pengantin Pria (opsional)">
+          <ImageUpload
+            value={data.photo.groom}
+            onChange={url => setPhoto("groom", url)}
+            aspectClass="aspect-square"
+            label=""
           />
         </Field>
         <Field label="Nama Pengantin Wanita">
@@ -374,11 +389,26 @@ function EditorForm({
             placeholder="Nama lengkap pengantin wanita"
           />
         </Field>
+        <Field label="Gelar Wanita (opsional — e.g. S.Ak)">
+          <Input
+            value={data.couple.brideRole ?? ""}
+            onChange={v => set("couple", { ...data.couple, brideRole: v || undefined })}
+            placeholder="S.Ak"
+          />
+        </Field>
         <Field label="Nama Orang Tua Wanita (opsional)">
           <Input
             value={data.couple.brideParents ?? ""}
             onChange={v => set("couple", { ...data.couple, brideParents: v })}
             placeholder="Putri dari Bapak ... & Ibu ..."
+          />
+        </Field>
+        <Field label="Foto Pengantin Wanita (opsional)">
+          <ImageUpload
+            value={data.photo.bride}
+            onChange={url => setPhoto("bride", url)}
+            aspectClass="aspect-square"
+            label=""
           />
         </Field>
       </Section>
@@ -476,6 +506,130 @@ function EditorForm({
             label=""
           />
         </Field>
+      </Section>
+
+      {/* OPENING SCREEN */}
+      <Section title="🎬 Opening Screen">
+        <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={data.opening?.showLoadingScreen ?? true}
+            onChange={e => set("opening", {
+              showLoadingScreen: e.target.checked,
+              loadingNames: data.opening?.loadingNames,
+              loadingDate: data.opening?.loadingDate,
+            })}
+            className="rounded border-stone-300 text-amber-500 focus:ring-amber-400"
+          />
+          Tampilkan layar opening / loading
+        </label>
+        <Field label="Teks Nama di Opening (opsional)">
+          <Input
+            value={data.opening?.loadingNames ?? ""}
+            onChange={v => set("opening", { ...(data.opening ?? { showLoadingScreen: true }), loadingNames: v || undefined })}
+            placeholder="Rizky & Aulia"
+          />
+        </Field>
+        <Field label="Teks Tanggal di Opening (opsional)">
+          <Input
+            value={data.opening?.loadingDate ?? ""}
+            onChange={v => set("opening", { ...(data.opening ?? { showLoadingScreen: true }), loadingDate: v || undefined })}
+            placeholder="20 SEPTEMBER 2025"
+          />
+        </Field>
+      </Section>
+
+      {/* PROPOSAL */}
+      <Section title="💍 Proposal Moment">
+        <Field label="Quote Proposal (opsional)">
+          <Input
+            value={data.proposal?.quote ?? ""}
+            onChange={v => set("proposal", { ...(data.proposal ?? {}), quote: v || undefined })}
+            placeholder="Will you be my forever?"
+          />
+        </Field>
+        <Field label="Jawaban (opsional)">
+          <Input
+            value={data.proposal?.reply ?? ""}
+            onChange={v => set("proposal", { ...(data.proposal ?? {}), reply: v || undefined })}
+            placeholder="Yes, I Do! 💍"
+          />
+        </Field>
+        <Field label="Foto Momen Proposal (opsional)">
+          <ImageUpload
+            value={data.photo.proposal}
+            onChange={url => setPhoto("proposal", url)}
+            aspectClass="aspect-[4/3]"
+            label=""
+          />
+        </Field>
+      </Section>
+
+      {/* AYAT SUCI */}
+      <Section title="📖 Ayat Suci">
+        <Field label="Teks Arab">
+          <Textarea
+            value={data.verse?.arabic ?? ""}
+            onChange={v => set("verse", { ...(data.verse ?? { arabic: "", translation: "" }), arabic: v })}
+            placeholder="وَمِنْ آيَاتِهِ..."
+            rows={2}
+          />
+        </Field>
+        <Field label="Terjemahan">
+          <Textarea
+            value={data.verse?.translation ?? ""}
+            onChange={v => set("verse", { ...(data.verse ?? { arabic: "", translation: "" }), translation: v })}
+            placeholder="Dan di antara tanda-tanda kekuasaan-Nya..."
+            rows={2}
+          />
+        </Field>
+        <Field label="Sumber Ayat (opsional)">
+          <Input
+            value={data.verse?.source ?? ""}
+            onChange={v => set("verse", { ...(data.verse ?? { arabic: "", translation: "" }), source: v || undefined })}
+            placeholder="QS. Ar-Rum: 21"
+          />
+        </Field>
+      </Section>
+
+      {/* OUR STORY */}
+      <Section title="📝 Our Story">
+        <StoryEditor
+          scenes={data.story?.scenes ?? []}
+          onChange={(scenes) => set("story", scenes.length > 0 ? { scenes } : undefined)}
+        />
+      </Section>
+
+      {/* GALLERY */}
+      <Section title="🖼️ Gallery Foto">
+        <GalleryEditor
+          photos={data.gallery?.photos ?? []}
+          onChange={(photos) => set("gallery", photos.length > 0 ? { photos } : undefined)}
+        />
+      </Section>
+
+      {/* MUSIC */}
+      <Section title="🎵 Background Music">
+        <label className="flex items-center gap-2 text-sm text-stone-600 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={data.music?.enabled ?? false}
+            onChange={e => set("music", { enabled: e.target.checked, url: data.music?.url })}
+            className="rounded border-stone-300 text-amber-500 focus:ring-amber-400"
+          />
+          Aktifkan background music
+        </label>
+        {data.music?.enabled && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-2">
+            <Field label="URL Audio (MP3)">
+              <Input
+                value={data.music?.url ?? ""}
+                onChange={v => set("music", { enabled: true, url: v || undefined })}
+                placeholder="https://example.com/lagu.mp3"
+              />
+            </Field>
+          </motion.div>
+        )}
       </Section>
 
       {/* LINK UNDANGAN */}
@@ -647,5 +801,95 @@ function Textarea({ value, onChange, placeholder, rows = 3 }: {
       rows={rows}
       className="w-full px-3 py-2.5 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white resize-none"
     />
+  )
+}
+
+// ─── Story Editor ──────────────────────────────────────
+
+function StoryEditor({
+  scenes,
+  onChange,
+}: {
+  scenes: NonNullable<TemplateProps["story"]>["scenes"]
+  onChange: (scenes: NonNullable<TemplateProps["story"]>["scenes"]) => void
+}) {
+  const addScene = () => {
+    if (scenes.length >= 4) return
+    onChange([...scenes, { illustrationUrl: "", caption: "" }])
+  }
+  const updateScene = (i: number, field: string, value: string) =>
+    onChange(scenes.map((s, idx) => idx === i ? { ...s, [field]: value } : s))
+  const removeScene = (i: number) =>
+    onChange(scenes.filter((_, idx) => idx !== i))
+
+  return (
+    <div className="space-y-3">
+      {scenes.map((scene, i) => (
+        <div key={i} className="bg-stone-50 rounded-xl p-3 space-y-2 border border-stone-100">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-stone-500">Scene {i + 1}</span>
+            <button onClick={() => removeScene(i)} className="text-stone-400 hover:text-red-500 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <Field label="URL Ilustrasi">
+            <Input value={scene.illustrationUrl} onChange={v => updateScene(i, "illustrationUrl", v)} placeholder="https://example.com/scene-1.svg" />
+          </Field>
+          <Field label="Caption">
+            <Textarea value={scene.caption} onChange={v => updateScene(i, "caption", v)} placeholder="Pertama kali bertemu di kampus..." rows={2} />
+          </Field>
+        </div>
+      ))}
+      {scenes.length < 4 && (
+        <button onClick={addScene} className="w-full py-2.5 rounded-xl border-2 border-dashed border-stone-300 text-sm text-stone-500 hover:border-amber-400 hover:text-amber-700 transition-colors">
+          + Tambah Scene
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ─── Gallery Editor ─────────────────────────────────────
+
+function GalleryEditor({
+  photos,
+  onChange,
+}: {
+  photos: NonNullable<TemplateProps["gallery"]>["photos"]
+  onChange: (photos: NonNullable<TemplateProps["gallery"]>["photos"]) => void
+}) {
+  const addPhoto = () => {
+    if (photos.length >= 6) return
+    onChange([...photos, { url: "" }])
+  }
+  const updatePhoto = (i: number, field: string, value: string) =>
+    onChange(photos.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
+  const removePhoto = (i: number) =>
+    onChange(photos.filter((_, idx) => idx !== i))
+
+  return (
+    <div className="space-y-3">
+      {photos.map((photo, i) => (
+        <div key={i} className="bg-stone-50 rounded-xl p-3 space-y-2 border border-stone-100">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-stone-500">Foto {i + 1}</span>
+            <button onClick={() => removePhoto(i)} className="text-stone-400 hover:text-red-500 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <Field label="URL Foto">
+            <Input value={photo.url} onChange={v => updatePhoto(i, "url", v)} placeholder="https://example.com/gallery-1.jpg" />
+          </Field>
+          <Field label="Caption (opsional)">
+            <Input value={photo.caption ?? ""} onChange={v => updatePhoto(i, "caption", v)} placeholder="First Date" />
+          </Field>
+        </div>
+      ))}
+      {photos.length < 6 && (
+        <button onClick={addPhoto} className="w-full py-2.5 rounded-xl border-2 border-dashed border-stone-300 text-sm text-stone-500 hover:border-amber-400 hover:text-amber-700 transition-colors">
+          + Tambah Foto
+        </button>
+      )}
+    </div>
   )
 }

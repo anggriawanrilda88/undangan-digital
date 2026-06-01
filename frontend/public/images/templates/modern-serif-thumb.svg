@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="533" viewBox="0 0 400 533">
+  <!-- Background white -->
+  <rect width="400" height="533" fill="#FFFFFF"/>
+
+  <!-- Bold black top accent bar -->
+  <rect x="0" y="0" width="400" height="5" fill="#1C1917"/>
+
+  <!-- Full-bleed photo placeholder rectangle -->
+  <rect x="0" y="5" width="400" height="230" fill="#F5F5F4"/>
+  <!-- Photo silhouette hint -->
+  <ellipse cx="185" cy="145" rx="32" ry="40" fill="#D6D3D1" opacity="0.7"/>
+  <circle cx="185" cy="112" r="20" fill="#D6D3D1" opacity="0.7"/>
+  <ellipse cx="215" cy="148" rx="32" ry="40" fill="#A8A29E" opacity="0.55"/>
+  <circle cx="215" cy="114" r="20" fill="#A8A29E" opacity="0.55"/>
+  <!-- Photo overlay gradient hint -->
+  <rect x="0" y="160" width="400" height="75" fill="url(#fadeBlack)" opacity="0.4"/>
+  <defs>
+    <linearGradient id="fadeBlack" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#1C1917" stop-opacity="0.35"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Names overlaid on photo bottom -->
+  <text x="32" y="208" font-family="Georgia, 'Times New Roman', serif" font-size="13" fill="#44403C" letter-spacing="5" opacity="0.8">RIZKY</text>
+  <text x="32" y="228" font-family="Georgia, 'Times New Roman', serif" font-size="13" fill="#44403C" letter-spacing="5" opacity="0.6">AULIA</text>
+
+  <!-- Vertical accent line left -->
+  <rect x="32" y="250" width="2" height="60" fill="#1C1917"/>
+
+  <!-- Section: Names large -->
+  <text x="50" y="272" font-family="Georgia, 'Times New Roman', serif" font-size="32" font-weight="bold" fill="#1C1917">Rizky</text>
+  <text x="50" y="305" font-family="Georgia, 'Times New Roman', serif" font-size="16" fill="#78716C">&amp; Aulia</text>
+
+  <!-- Thin horizontal separator -->
+  <rect x="32" y="322" width="336" height="0.75" fill="#1C1917" opacity="0.15"/>
+
+  <!-- Date block — editorial style -->
+  <text x="32" y="346" font-family="Arial, sans-serif" font-size="9" fill="#78716C" letter-spacing="3">SABTU</text>
+  <text x="32" y="375" font-family="Georgia, 'Times New Roman', serif" font-size="46" font-weight="bold" fill="#1C1917" opacity="0.9">20</text>
+  <text x="88" y="362" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="#1C1917" opacity="0.7">SEP</text>
+  <text x="88" y="381" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="#1C1917" opacity="0.7">2026</text>
+
+  <!-- Separator -->
+  <rect x="32" y="393" width="336" height="0.75" fill="#1C1917" opacity="0.15"/>
+
+  <!-- Venue block -->
+  <text x="32" y="415" font-family="Arial, sans-serif" font-size="8" fill="#78716C" letter-spacing="3">VENUE</text>
+  <text x="32" y="434" font-family="Georgia, 'Times New Roman', serif" font-size="14" fill="#1C1917" font-weight="bold">Gedung Serbaguna</text>
+  <text x="32" y="450" font-family="Arial, sans-serif" font-size="10" fill="#78716C">Jl. Raya No. 1, Jakarta</text>
+
+  <!-- Separator -->
+  <rect x="32" y="465" width="336" height="0.75" fill="#1C1917" opacity="0.15"/>
+
+  <!-- RSVP — minimal text -->
+  <text x="32" y="483" font-family="Arial, sans-serif" font-size="8" fill="#78716C" letter-spacing="3">RSVP SEBELUM 1 SEPTEMBER 2026</text>
+
+  <!-- Bottom block accent -->
+  <rect x="0" y="510" width="400" height="23" fill="#1C1917"/>
+  <text x="200" y="526" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#FFFFFF" letter-spacing="3" opacity="0.8">UNDANGAN PERNIKAHAN</text>
+</svg>

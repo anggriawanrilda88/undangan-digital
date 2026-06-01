@@ -6,6 +6,7 @@ import EditorShell from "@/components/editor/EditorShell"
 import TemplateElegantGarden from "@/components/templates/TemplateElegantGarden"
 import TemplateModernSerif from "@/components/templates/TemplateModernSerif"
 import TemplateRoyalBatik from "@/components/templates/TemplateRoyalBatik"
+import TemplateCartoonWhimsical from "@/components/templates/TemplateCartoonWhimsical"
 import { useInvitationEditor } from "@/hooks/useInvitationEditor"
 
 // Template registry — tambah template baru di sini
@@ -13,6 +14,7 @@ const TEMPLATE_MAP: Record<string, React.ComponentType<import("@/types/template"
   "elegant-garden": TemplateElegantGarden,
   "modern-serif": TemplateModernSerif,
   "royal-batik": TemplateRoyalBatik,
+  "cartoon-whimsical": TemplateCartoonWhimsical,
 }
 
 const FALLBACK_TEMPLATE = TemplateElegantGarden

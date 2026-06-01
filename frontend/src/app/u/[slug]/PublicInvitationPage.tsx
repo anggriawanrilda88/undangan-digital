@@ -10,12 +10,14 @@ import { shareUrl, whatsappShareText } from "@/lib/utils"
 import TemplateElegantGarden from "@/components/templates/TemplateElegantGarden"
 import TemplateModernSerif from "@/components/templates/TemplateModernSerif"
 import TemplateRoyalBatik from "@/components/templates/TemplateRoyalBatik"
+import TemplateCartoonWhimsical from "@/components/templates/TemplateCartoonWhimsical"
 
 // Template registry (sama dengan editor)
 const TEMPLATE_MAP: Record<string, React.ComponentType<TemplateProps>> = {
   "elegant-garden": TemplateElegantGarden,
   "modern-serif": TemplateModernSerif,
   "royal-batik": TemplateRoyalBatik,
+  "cartoon-whimsical": TemplateCartoonWhimsical,
 }
 
 interface PublicInvitationPageProps {
